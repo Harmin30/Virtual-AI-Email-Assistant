@@ -5,10 +5,14 @@ import datetime
 from transformers import pipeline
 from models import EmailStatus, Session
 from datetime import datetime as dt
+import os
 
 # 🔍 Load summarizer model once
 summarizer = pipeline("summarization", model="sshleifer/distilbart-cnn-12-6")
 
+# 📁 Ensure attachment directory exists
+ATTACHMENT_DIR = os.path.join("static", "attachments")
+os.makedirs(ATTACHMENT_DIR, exist_ok=True)
 
 # 🧠 Email Classification
 def classify_email(subject, body):
@@ -22,11 +26,9 @@ def classify_email(subject, body):
     else:
         return 'Inbox'
 
-
 # ⚠️ Priority Detection
 def determine_priority(subject, body):
     combined = f"{subject.lower()} {body.lower()}"
-
     high_keywords = ['urgent', 'asap', 'immediate', 'critical', 'action required', 'important', 'client escalation']
     medium_keywords = ['reminder', 'follow up', 'reschedule', 'please check', 'client update', 'awaiting response']
 
@@ -35,8 +37,6 @@ def determine_priority(subject, body):
     elif any(word in combined for word in medium_keywords):
         return 'Medium'
     return 'Low'
-
-
 
 # 📝 Summarize email content
 def summarize_email(text):
@@ -49,7 +49,6 @@ def summarize_email(text):
     except Exception as e:
         print(f"[❌ Summarization failed]: {e}")
         return text
-
 
 # 📩 Fetch unseen emails and store in DB
 def fetch_emails(email_address, imap_password):
@@ -91,17 +90,34 @@ def fetch_emails(email_address, imap_password):
             except:
                 timestamp = datetime.datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
 
-            # 📄 Extract plain text body
+            # 📄 Extract plain text body + attachments
             body = ""
+            attachments = []
+
             if msg.is_multipart():
                 for part in msg.walk():
                     content_disposition = str(part.get("Content-Disposition"))
-                    if part.get_content_type() == "text/plain" and "attachment" not in content_disposition:
+                    content_type = part.get_content_type()
+
+                    if content_type == "text/plain" and "attachment" not in content_disposition:
                         try:
                             body = part.get_payload(decode=True).decode(part.get_content_charset() or 'utf-8', errors='ignore')
-                            break
                         except:
                             continue
+
+                    elif "attachment" in content_disposition:
+                        filename = part.get_filename()
+                        if filename:
+                            decoded_filename, encoding = decode_header(filename)[0]
+                            if isinstance(decoded_filename, bytes):
+                                filename = decoded_filename.decode(encoding or 'utf-8', errors='ignore')
+                            filepath = os.path.join(ATTACHMENT_DIR, filename)
+                            try:
+                                with open(filepath, "wb") as f:
+                                    f.write(part.get_payload(decode=True))
+                                attachments.append(filename)
+                            except Exception as e:
+                                print(f"❌ Failed to save attachment: {filename}", e)
             else:
                 try:
                     body = msg.get_payload(decode=True).decode(msg.get_content_charset() or 'utf-8', errors='ignore')
@@ -124,7 +140,8 @@ def fetch_emails(email_address, imap_password):
                     summary=summary,
                     timestamp=dt.strptime(timestamp, "%Y-%m-%dT%H:%M:%S"),
                     body=body,
-                    priority=priority
+                    priority=priority,
+                    attachments=", ".join(attachments) if attachments else None
                 )
                 session.add(email_obj)
                 session.commit()

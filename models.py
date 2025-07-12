@@ -8,6 +8,7 @@ from datetime import datetime
 Base = declarative_base()
 
 # 📩 EmailStatus model
+# 📩 EmailStatus model
 class EmailStatus(Base):
     __tablename__ = 'email_status'
 
@@ -22,6 +23,8 @@ class EmailStatus(Base):
     priority = Column(String(10), default='Low')
     smart_reply = Column(Text)
     body = Column(Text)
+    attachments = Column(Text)   # ✅ Add this line
+
 
 # 👤 User model
 class User(Base, UserMixin):
@@ -55,6 +58,8 @@ class SentEmail(Base):
     body = Column(Text)
     attachments = Column(Text, nullable=True)
     sent_at = Column(DateTime, default=datetime.utcnow)
+    attachments = Column(String)
+    
 
 # 🔧 Database setup
 engine = create_engine('sqlite:///emails.db', echo=False)

@@ -103,6 +103,19 @@
             <div class="email-summary">
                 {{ email.summary or email.subject }}
             </div>
+            {% if email.attachments %}
+            <p><strong>Attachments:</strong></p>
+            <ul>
+                {% for filename in email.attachments.split(',') %}
+                <li>
+                    <a href="{{ url_for('download_attachment', filename=filename.strip()) }}" target="_blank">
+                        📎 {{ filename.strip() }}
+                    </a>
+                </li>
+                {% endfor %}
+            </ul>
+            {% endif %}
+
 
             <div class="email-details" style="display: none;">
                 <p>
@@ -221,6 +234,36 @@
             });
         }
     </script>
+<!-- DELETE DETAILS JS
+ <script>
+  function deleteEmail(emailId, btn) {
+    if (!confirm("Are you sure you want to delete this email?")) return;
+
+    fetch(`/delete_email/${emailId}`, {
+      method: "POST"
+    })
+    .then(response => {
+      if (response.ok) {
+        // Remove the entire email container (row or div)
+        const emailRow = btn.closest("tr");
+        if (emailRow) {
+          emailRow.remove();
+        } else {
+          const emailContainer = btn.closest(".email");
+          if (emailContainer) {
+            emailContainer.remove();
+          }
+        }
+      } else {
+        alert("Failed to delete the email.");
+      }
+    })
+    .catch(error => {
+      console.error("Error:", error);
+      alert("An error occurred while deleting the email.");
+    });
+  }
+</script> -->
 
 </body>
 
