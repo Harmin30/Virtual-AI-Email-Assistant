@@ -1002,3 +1002,11 @@ body.dark-mode .close-btn:hover {
   border-top: 1px solid #ccc;
   display: none;
 }
+
+
+.sidebar-btn.active {
+    background-color: #2b2f4e;   /* Example highlight background */
+    color: #ffffff;              /* Highlight text color */
+    font-weight: bold;
+    border-left: 4px solid #00bcd4; 
+}

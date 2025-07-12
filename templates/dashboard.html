@@ -14,19 +14,41 @@
         <div class="toggle-sidebar" onclick="toggleSidebar()">
             <i class="fas fa-bars"></i>
         </div>
-        <a href="{{ url_for('compose') }}" class="sidebar-btn" title="Compose"><i
-                class="fas fa-pencil-alt"></i><span>Compose</span></a>
-        <a href="/" class="sidebar-btn" title="Inbox"><i class="fas fa-inbox"></i><span>Inbox</span></a>
-        <a href="/?filter=unread" class="sidebar-btn" title="Unread"><i
-                class="fas fa-envelope-open-text"></i><span>Unread</span></a>
-        <a href="/?filter=read" class="sidebar-btn" title="Read"><i class="fas fa-envelope"></i><span>Read</span></a>
-        <a href="/?filter=archived" class="sidebar-btn" title="Archived"><i
-                class="fas fa-archive"></i><span>Archived</span></a>
-        <a href="{{ url_for('sent') }}" class="sidebar-btn" title="Sent"><i
-                class="fas fa-paper-plane"></i><span>Sent</span></a>
-        <a href="{{ url_for('logout') }}" class="sidebar-btn logout" title="Logout"><i
-                class="fas fa-sign-out-alt"></i><span>Logout</span></a>
+
+        <a href="{{ url_for('compose') }}" class="sidebar-btn {% if active_page == 'compose' %}active{% endif %}"
+            title="Compose">
+            <i class="fas fa-pencil-alt"></i><span>Compose</span>
+        </a>
+
+        <a href="{{ url_for('dashboard') }}" class="sidebar-btn {% if active_page == 'inbox' %}active{% endif %}"
+            title="Inbox">
+            <i class="fas fa-inbox"></i><span>Inbox</span>
+        </a>
+
+
+        <a href="/?filter=unread" class="sidebar-btn {% if active_page == 'unread' %}active{% endif %}" title="Unread">
+            <i class="fas fa-envelope-open-text"></i><span>Unread</span>
+        </a>
+
+        <a href="/?filter=read" class="sidebar-btn {% if active_page == 'read' %}active{% endif %}" title="Read">
+            <i class="fas fa-envelope"></i><span>Read</span>
+        </a>
+
+        <a href="/?filter=archived" class="sidebar-btn {% if active_page == 'archived' %}active{% endif %}"
+            title="Archived">
+            <i class="fas fa-archive"></i><span>Archived</span>
+        </a>
+
+        <a href="{{ url_for('sent') }}" class="sidebar-btn {% if active_page == 'sent' %}active{% endif %}"
+            title="Sent">
+            <i class="fas fa-paper-plane"></i><span>Sent</span>
+        </a>
+
+        <a href="{{ url_for('logout') }}" class="sidebar-btn logout" title="Logout">
+            <i class="fas fa-sign-out-alt"></i><span>Logout</span>
+        </a>
     </div>
+
 
     <div class="main-content">
         <div class="top-bar">
@@ -234,36 +256,6 @@
             });
         }
     </script>
-<!-- DELETE DETAILS JS
- <script>
-  function deleteEmail(emailId, btn) {
-    if (!confirm("Are you sure you want to delete this email?")) return;
-
-    fetch(`/delete_email/${emailId}`, {
-      method: "POST"
-    })
-    .then(response => {
-      if (response.ok) {
-        // Remove the entire email container (row or div)
-        const emailRow = btn.closest("tr");
-        if (emailRow) {
-          emailRow.remove();
-        } else {
-          const emailContainer = btn.closest(".email");
-          if (emailContainer) {
-            emailContainer.remove();
-          }
-        }
-      } else {
-        alert("Failed to delete the email.");
-      }
-    })
-    .catch(error => {
-      console.error("Error:", error);
-      alert("An error occurred while deleting the email.");
-    });
-  }
-</script> -->
 
 </body>
 
