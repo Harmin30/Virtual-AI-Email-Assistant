@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Virtual Email Assistant</title>
+    <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+
+<body>
+    <div class="sidebar" id="sidebar">
+        <div class="toggle-sidebar" onclick="toggleSidebar()">
+            <i class="fas fa-bars"></i>
+        </div>
+        <a href="{{ url_for('compose') }}" class="sidebar-btn" title="Compose"><i
+                class="fas fa-pencil-alt"></i><span>Compose</span></a>
+        <a href="/" class="sidebar-btn" title="Inbox"><i class="fas fa-inbox"></i><span>Inbox</span></a>
+        <a href="/?filter=unread" class="sidebar-btn" title="Unread"><i
+                class="fas fa-envelope-open-text"></i><span>Unread</span></a>
+        <a href="/?filter=read" class="sidebar-btn" title="Read"><i class="fas fa-envelope"></i><span>Read</span></a>
+        <a href="/?filter=archived" class="sidebar-btn" title="Archived"><i
+                class="fas fa-archive"></i><span>Archived</span></a>
+        <a href="{{ url_for('sent') }}" class="sidebar-btn" title="Sent"><i
+                class="fas fa-paper-plane"></i><span>Sent</span></a>
+        <a href="{{ url_for('logout') }}" class="sidebar-btn logout" title="Logout"><i
+                class="fas fa-sign-out-alt"></i><span>Logout</span></a>
+    </div>
+
+    <div class="main-content">
+        <div class="top-bar">
+            <div class="left-title">
+                <h2> Virtual Email Assistant Dashboard
+                    {% if current_user.is_authenticated and current_user.is_admin %}
+                    <span class="admin-crown" title="Admin"></span>
+                    {% endif %}
+                </h2>
+            </div>
+
+            <div class="right-info">
+                {% if current_user.is_authenticated %}
+                <span class="user-info">👤 {{ current_user.email }}</span>
+                {% endif %}
+                <button class="toggle-btn" onclick="toggleDarkMode()">🌙 Dark Mode</button>
+            </div>
+        </div>
+
+
+        <div class="search-bar">
+            <form method="get" action="/">
+                <input type="text" name="q" class="search-input" placeholder="Search by sender, subject..."
+                    value="{{ query }}">
+                <input type="hidden" name="filter" value="{{ filter_mode }}">
+                <button type="submit"><i class="fas fa-search"></i> Search</button>
+            </form>
+        </div>
+
+        {% for email in emails %}
+        <div class="email {{ email.classification | lower }}">
+            <p><strong>From:</strong> {{ email.sender }}</p>
+            <p><strong>Subject:</strong> {{ email.subject }}</p>
+            <p><strong>Category:</strong> {{ email.classification }}</p>
+            <p><strong>Summary:</strong> {{ email.summary }}</p>
+            <p><strong>Priority:</strong>
+                <span class="badge priority-{{ email.priority | lower }}">{{ email.priority }}</span>
+            </p>
+            <small>{{ email.timestamp | format_datetime }}</small>
+
+            {% if email.archived %}
+            <span class="badge archived">📁 Archived</span>
+            {% endif %}
+
+            {% if email.read %}
+            <span class="badge read">✅ Read</span>
+            {% else %}
+            <span class="badge unread">🔴 Unread</span>
+            <button onclick="markAsRead(this, '{{ email.subject }}')">✔️ Mark as Read</button>
+            {% endif %}
+
+            <form action="/reply" method="post">
+                <input type="hidden" name="to" value="{{ email.sender }}">
+                <textarea name="message" rows="2" placeholder="Type your reply..." required></textarea>
+                <button type="submit"><i class="fas fa-reply"></i> Reply</button>
+            </form>
+
+            <button class="small-btn archive-btn" onclick="archiveEmail('{{ email.subject }}')" title="Archive">
+                <i class="fas fa-box"></i>
+            </button>
+
+            <button class="small-btn delete-btn" onclick="deleteEmail('{{ email.subject }}')" title="Delete">
+                <i class="fas fa-trash"></i>
+            </button>
+
+        </div>
+
+        <div class="email">
+            <div class="email-header">
+                <strong>{{ email.subject }}</strong> - {{ email.from or email.to }}
+                <button class="toggle-details-btn" onclick="toggleDetails(this)">▼ View Details</button>
+            </div>
+
+            <div class="email-summary">
+                {{ email.summary or email.subject }}
+            </div>
+
+            <div class="email-details" style="display: none;">
+                <p>
+                    {% if email.body %}
+                    {{ email.body.replace('\n', '<br>') | safe }}
+                    {% else %}
+                    <em>No body available.</em>
+                    {% endif %}
+                </p>
+
+                {% if email.attachments %}
+                <p><strong>Attachments:</strong></p>
+                <ul>
+                    {% for filename in email.attachments.split(',') %}
+                    <li>
+                        <a href="{{ url_for('download_attachment', filename=filename.strip()) }}" target="_blank">
+                            {{ filename.strip() }}
+                        </a>
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+
+        <div class="smart-reply">
+            <h3>💡 Smart Reply</h3>
+            <form id="smart-reply-form">
+                <textarea id="email_content" placeholder="Paste email content..." rows="3" required></textarea>
+                <button type="submit"><i class="fas fa-bolt"></i> Generate Smart Reply</button>
+            </form>
+            <div id="smart-reply-result"></div>
+        </div>
+    </div>
+
+
+    <script>
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('collapsed');
+        }
+        function toggleDarkMode() {
+            document.body.classList.toggle('dark-mode');
+        }
+        function toggleDetails(btn) {
+            const details = btn.closest('.email').querySelector('.email-details');
+            const isVisible = details.style.display === 'block';
+            details.style.display = isVisible ? 'none' : 'block';
+            btn.textContent = isVisible ? '▼ View Details' : '▲ Hide';
+        }
+    </script>
+
+    <script src="{{ url_for('static', filename='dashboard.js') }}"></script>
+
+    <a href="{{ url_for('compose') }}" class="compose-email">
+        <i class="fas fa-pencil-alt"></i>
+        <span class="compose-label">Compose</span>
+    </a>
+
+    <script>
+        function markAsRead(button, subject) {
+            fetch('/mark_read', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ subject: subject })
+            }).then(res => {
+                if (res.ok) {
+                    const emailCard = button.closest('.email');
+                    button.remove();  // remove the "Mark as Read" button
+
+                    // Update unread badge to read
+                    const unreadBadge = emailCard.querySelector('.badge.unread');
+                    if (unreadBadge) {
+                        unreadBadge.textContent = '✅ Read';
+                        unreadBadge.classList.remove('unread');
+                        unreadBadge.classList.add('read');
+                    }
+                }
+            });
+        }
+
+        function deleteEmail(subject) {
+            fetch('/delete', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ subject: subject })
+            }).then(res => {
+                if (res.ok) {
+                    const emailCard = document.querySelector(`.email:has(button[onclick*="${subject}"])`);
+                    if (emailCard) {
+                        emailCard.remove();  // instantly remove email from view
+                    }
+                }
+            });
+        }
+
+        function archiveEmail(subject) {
+            fetch('/archive', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ subject: subject })
+            }).then(res => {
+                if (res.ok) {
+                    const emailCard = document.querySelector(`.email:has(button[onclick*="${subject}"])`);
+                    const archivedBadge = document.createElement('span');
+                    archivedBadge.className = 'badge archived';
+                    archivedBadge.textContent = '📁 Archived';
+                    emailCard.insertBefore(archivedBadge, emailCard.children[0]); // Add badge
+                }
+            });
+        }
+    </script>
+
+</body>
+
+</html>

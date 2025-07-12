@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>📤 Sent Emails</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root {
+      --card-bg: #f9f9f9;
+      --card-bg-dark: #1e1e1e;
+      --text-color: #333;
+      --text-color-dark: #ddd;
+      --muted: #777;
+      --muted-dark: #aaa;
+      --shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+      --shadow-dark: 0 2px 10px rgba(255, 255, 255, 0.04);
+    }
+
+    body.dark-mode .email-card {
+      background-color: var(--card-bg-dark);
+      color: var(--text-color-dark);
+      box-shadow: var(--shadow-dark);
+    }
+
+    .email-card {
+      background-color: var(--card-bg);
+      color: var(--text-color);
+      border-radius: 8px;
+      padding: 18px 20px;
+      margin-bottom: 20px;
+      box-shadow: var(--shadow);
+      transition: 0.3s;
+    }
+
+    .email-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+    }
+
+    .email-header h3 {
+      font-size: 1rem;
+      margin: 0;
+    }
+
+    .email-meta {
+      font-size: 0.85rem;
+      color: var(--muted);
+      margin: 5px 0 10px;
+    }
+
+    .email-body {
+      display: none;
+      margin-top: 10px;
+      font-size: 0.9rem;
+      line-height: 1.5;
+    }
+
+    .toggle-body {
+      font-size: 0.85rem;
+      border: none;
+      background: none;
+      color: #3498db;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+
+    .attachment {
+      margin-top: 10px;
+    }
+
+    .attachment a {
+      display: inline-block;
+      margin-right: 10px;
+      text-decoration: none;
+      font-size: 0.9rem;
+      color: #2c3e50;
+    }
+
+    .sent-date {
+      text-align: right;
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin-top: 15px;
+    }
+
+    .sidebar, .top-bar {
+      /* keep your existing style.css sidebar/top-bar support */
+    }
+  </style>
+</head>
+
+<body>
+  <div class="sidebar" id="sidebar">
+    <div class="toggle-sidebar" onclick="toggleSidebar()">
+      <i class="fas fa-bars"></i>
+    </div>
+    <a href="{{ url_for('compose') }}" class="sidebar-btn"><i class="fas fa-pencil-alt"></i><span>Compose</span></a>
+    <a href="{{ url_for('dashboard') }}" class="sidebar-btn"><i class="fas fa-inbox"></i><span>Inbox</span></a>
+    <a href="{{ url_for('sent') }}" class="sidebar-btn active"><i class="fas fa-paper-plane"></i><span>Sent</span></a>
+    <a href="{{ url_for('logout') }}" class="sidebar-btn logout"><i class="fas fa-sign-out-alt"></i><span>Logout</span></a>
+  </div>
+
+  <div class="main-content">
+    <div class="top-bar">
+      <h2><i class="fas fa-paper-plane"></i> Sent Emails</h2>
+    </div>
+
+    {% for email in sent_emails %}
+    <div class="email-card">
+      <div class="email-header" onclick="toggleEmail(this)">
+        <h3>{{ email.subject }}</h3>
+        <i class="fas fa-chevron-down"></i>
+      </div>
+      <div class="email-meta">To: {{ email.to }}{% if email.cc %}, CC: {{ email.cc }}{% endif %}</div>
+      <div class="email-body">
+        <p>{{ email.body.replace('\n', '<br>') | safe }}</p>
+
+        {% if email.attachments %}
+        <div class="attachment">
+          <strong>Attachments:</strong><br>
+          {% for filename in email.attachments.split(',') %}
+          <a href="{{ url_for('download_attachment', filename=filename.strip()) }}" target="_blank">
+            <i class="fas fa-paperclip"></i> {{ filename.strip() }}
+          </a>
+          {% endfor %}
+        </div>
+        {% endif %}
+
+        <div class="sent-date">
+          Sent on: {{ email.sent_at.strftime('%d-%m-%Y %I:%M %p') if email.sent_at else '—' }}
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <script>
+    function toggleSidebar() {
+      document.getElementById('sidebar').classList.toggle('collapsed');
+    }
+
+    function toggleEmail(headerDiv) {
+      const icon = headerDiv.querySelector("i");
+      const bodyDiv = headerDiv.nextElementSibling.nextElementSibling;
+
+      if (bodyDiv.style.display === "block") {
+        bodyDiv.style.display = "none";
+        icon.classList.remove("fa-chevron-up");
+        icon.classList.add("fa-chevron-down");
+      } else {
+        bodyDiv.style.display = "block";
+        icon.classList.remove("fa-chevron-down");
+        icon.classList.add("fa-chevron-up");
+      }
+    }
+  </script>
+</body>
+</html>

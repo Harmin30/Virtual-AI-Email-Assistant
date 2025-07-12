@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Admin Panel | Virtual Email Assistant</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <!-- <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: #fdfefe;
+            padding: 40px;
+        }
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+        }
+        .card {
+            margin: auto;
+            width: 80%;
+            padding: 20px;
+            background: #ffffff;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+            border-radius: 12px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ecf0f1;
+        }
+        th {
+            background: #3498db;
+            color: white;
+        }
+        tr:hover {
+            background: #f1f1f1;
+        }
+    </style> -->
+</head>
+<body>
+    <h1>👑 Admin Dashboard</h1>
+    <div class="card">
+        <h3>Registered Users</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>User ID</th>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Role</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in users %}
+                <tr>
+                    <td>{{ user.id }}</td>
+                    <td>{{ user.name }}</td>
+                    <td>{{ user.email }}</td>
+                    <td>{{ user.role }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>

@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Login | Virtual Email Assistant</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body class="login-body">
+    <div class="card login-card">
+        <h2>👋 Welcome back to your Virtual Email Assistant !</h2>
+        <h3>🔐 Login</h3>
+        <form method="POST">
+            <input type="email" name="email" placeholder="Email address  📧" required>
+
+            <div class="password-wrapper">
+                <input type="password" name="password" id="password" placeholder="Password  🔑" required>
+                <span class="toggle-password" onclick="togglePassword()">👁 Show</span>
+            </div>
+
+            <div class="forgot">
+                <a href="/forgot-password">Forgot Password?</a>
+            </div>
+
+            <button type="submit">Login</button>
+        </form>
+        <div class="footer">
+            Don't have an account? <a href="/register">Register</a>
+        </div>
+    </div>
+
+    <script>
+        function togglePassword() {
+            const passwordField = document.getElementById("password");
+            const toggle = document.querySelector(".toggle-password");
+            if (passwordField.type === "password") {
+                passwordField.type = "text";
+                toggle.textContent = "🙈 Hide";
+            } else {
+                passwordField.type = "password";
+                toggle.textContent = "👁 Show";
+            }
+        }
+    </script>
+</body>
+</html>

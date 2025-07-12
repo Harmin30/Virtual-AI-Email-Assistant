@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Register | Virtual Email Assistant</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body class="register-body">
+    <div class="card register-card">
+        <h2>📝 Register</h2>
+        <form method="POST">
+            <input type="text" name="name" placeholder="Full Name   👤" required>
+            <input type="email" name="email" placeholder="Email Address (for login)  📧" required>
+            <input type="password" name="password" placeholder="Create Password  🧿" required>
+
+            <select name="role" required>
+                <option value="">Select Role</option>
+                <option value="user">User  👤</option>
+                <option value="admin">Admin  👑</option>
+            </select>
+
+            <button type="submit">Create Account</button>
+        </form>
+        <div class="footer">
+            Already have an account? <a href="/login">Login</a>
+        </div>
+    </div>
+</body>
+</html>
