@@ -1122,7 +1122,19 @@ body.dark-mode .close-btn:hover {
 } */
 
 /* Global highlight color while reading */
-p::selection {
-  background: yellow;
-  color: black;
+/* ::selection {
+  background: #ffe066; 
+  color: #000;
+}
+
+.highlighted-word {
+    background-color: yellow;
+    color: black;
+    border-radius: 4px;
+    padding: 0 2px;
+} */
+.word.highlight {
+    background-color: yellow;
+    padding: 2px;
+    border-radius: 3px;
 }

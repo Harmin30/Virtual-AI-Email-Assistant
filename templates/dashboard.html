@@ -155,12 +155,21 @@
                     <em>No body available.</em>
                     {% endif %}
                 </p>
+                <!-- <p id="email-body">
+                    <span id="email-text">
+                        {% if email.body %}
+                        {{ email.body.replace('\n', '<br>') | safe }}
+                        {% else %}
+                        <em>No body available.</em>
+                        {% endif %}
+                    </span>
+                </p> -->
 
                 <button class="read-aloud-btn" title="Read Full Email Aloud">
                     <i class="fas fa-volume-up"></i> Read Aloud
                 </button>
-                <label for="voiceSelect" style="color: #fff; margin-right: 8px;">Voice:</label>
-                <select id="voiceSelect" style="padding: 4px; border-radius: 4px;">
+                <label class="voice-label" style="color: #fff;">Voice:</label>
+                <select class="voiceSelect" style="padding: 4px; border-radius: 4px;">
                     <option value="">Loading voices...</option>
                 </select>
 
@@ -329,56 +338,72 @@
 
         // ============================ TEXT to Speech=======================
 
-       document.addEventListener("DOMContentLoaded", () => {
-    const voiceSelect = document.getElementById("voiceSelect");
+document.addEventListener("DOMContentLoaded", () => {
     let voices = [];
-    let currentUtterance = null;
-    let reading = false;
 
     function populateVoices() {
         voices = speechSynthesis.getVoices();
-        voiceSelect.innerHTML = "";
-        voices.forEach((voice, i) => {
-            const option = document.createElement("option");
-            option.value = i;
-            option.textContent = `${voice.name} (${voice.lang}) ${voice.default ? "[default]" : ""}`;
-            voiceSelect.appendChild(option);
+        document.querySelectorAll(".voiceSelect").forEach(select => {
+            select.innerHTML = "";
+            voices.forEach((voice, index) => {
+                const option = document.createElement("option");
+                option.value = index;
+                option.textContent = `${voice.name} (${voice.lang}) ${voice.default ? "[default]" : ""}`;
+                select.appendChild(option);
+            });
+
+            const indianVoice = voices.find(v => v.lang.includes("en-IN") && v.name.toLowerCase().includes("female"));
+            if (indianVoice) {
+                select.value = voices.indexOf(indianVoice);
+            }
         });
-
-        const indianVoice = voices.find(v => v.lang.includes("en-IN") && v.name.toLowerCase().includes("female"));
-        if (indianVoice) {
-            voiceSelect.value = voices.indexOf(indianVoice);
-        }
     }
 
-    if (speechSynthesis.onvoiceschanged !== undefined) {
+    if (typeof speechSynthesis !== "undefined") {
         speechSynthesis.onvoiceschanged = populateVoices;
+        populateVoices();
     }
-    populateVoices();
 
     document.querySelectorAll(".read-aloud-btn").forEach(button => {
         button.addEventListener("click", () => {
-            const emailDetails = button.closest(".email-details");
-            const bodyParagraph = emailDetails.querySelector("p");
+            const container = button.closest(".email-details");
+            const bodyElement = container.querySelector(".email-read-body");
+            const voiceSelect = container.querySelector(".voiceSelect");
 
-            if (!bodyParagraph) return;
-
-            // If already reading, stop it
-            if (reading) {
+            if (speechSynthesis.speaking || speechSynthesis.pending) {
                 speechSynthesis.cancel();
-                window.getSelection().removeAllRanges();
-                button.innerHTML = '<i class="fas fa-volume-up"></i> Read Aloud';
-                reading = false;
+                restoreOriginalHTML(bodyElement);
+                button.innerHTML = `<i class="fas fa-volume-up"></i> Read Aloud`;
                 return;
             }
 
-            const textContent = bodyParagraph.textContent;
-            if (!textContent.trim()) {
+            const originalHTML = bodyElement.innerHTML.trim();
+            const plainText = bodyElement.textContent.trim();
+            if (!plainText) {
                 alert("No email body available to read.");
                 return;
             }
 
-            const utterance = new SpeechSynthesisUtterance(textContent);
+            // Store original
+            bodyElement.setAttribute("data-original-html", originalHTML);
+
+            // Convert HTML to spans while preserving <br>
+            const newHTML = [];
+            bodyElement.childNodes.forEach(node => {
+                if (node.nodeType === Node.TEXT_NODE) {
+                    const words = node.textContent.split(/\s+/).filter(w => w);
+                    words.forEach((word, i) => {
+                        newHTML.push(`<span class="word">${word}</span>${i < words.length - 1 ? ' ' : ''}`);
+                    });
+                } else if (node.nodeName === "BR") {
+                    newHTML.push("<br>");
+                } else {
+                    newHTML.push(node.outerHTML);  // Keep <b>, <i>, etc.
+                }
+            });
+            bodyElement.innerHTML = newHTML.join(" ");
+
+            const utterance = new SpeechSynthesisUtterance(plainText);
             utterance.rate = 1;
             utterance.pitch = 1;
 
@@ -387,62 +412,49 @@
                 utterance.voice = voices[selectedIndex];
             }
 
-            utterance.onboundary = (event) => {
+            const spans = bodyElement.querySelectorAll(".word");
+            let wordIndex = 0;
+
+            button.innerHTML = `<i class="fas fa-stop"></i> Stop`;
+
+            utterance.onboundary = function(event) {
                 if (event.name === "word") {
-                    const charIndex = event.charIndex;
-
-                    const range = document.createRange();
-                    const selection = window.getSelection();
-                    selection.removeAllRanges();
-
-                    let current = bodyParagraph;
-                    let node, offset = 0;
-
-                    function walk(node) {
-                        if (node.nodeType === Node.TEXT_NODE) {
-                            const len = node.textContent.length;
-                            if (charIndex >= offset && charIndex < offset + len) {
-                                range.setStart(node, charIndex - offset);
-                                range.setEnd(node, charIndex - offset + event.charLength || 1);
-                                selection.addRange(range);
-                                return true;
-                            }
-                            offset += len;
-                        } else {
-                            for (let i = 0; i < node.childNodes.length; i++) {
-                                if (walk(node.childNodes[i])) return true;
-                            }
-                        }
-                        return false;
+                    if (wordIndex > 0 && spans[wordIndex - 1]) {
+                        spans[wordIndex - 1].classList.remove("highlight");
                     }
-
-                    walk(current);
+                    if (wordIndex < spans.length && spans[wordIndex]) {
+                        spans[wordIndex].classList.add("highlight");
+                    }
+                    wordIndex++;
                 }
             };
 
             utterance.onend = () => {
-                reading = false;
-                button.innerHTML = '<i class="fas fa-volume-up"></i> Read Aloud';
-                window.getSelection().removeAllRanges();
+                restoreOriginalHTML(bodyElement);
+                button.innerHTML = `<i class="fas fa-volume-up"></i> Read Aloud`;
             };
 
             utterance.onerror = () => {
-                reading = false;
-                button.innerHTML = '<i class="fas fa-volume-up"></i> Read Aloud';
-                window.getSelection().removeAllRanges();
+                restoreOriginalHTML(bodyElement);
+                button.innerHTML = `<i class="fas fa-volume-up"></i> Read Aloud`;
             };
 
-            utterance.onpause = () => window.getSelection().removeAllRanges();
-
-            button.innerHTML = '<i class="fas fa-stop"></i> Stop Reading';
-            currentUtterance = utterance;
-            reading = true;
             speechSynthesis.speak(utterance);
         });
     });
+
+    function restoreOriginalHTML(bodyElement) {
+        const original = bodyElement.getAttribute("data-original-html");
+        if (original) {
+            bodyElement.innerHTML = original;
+            bodyElement.removeAttribute("data-original-html");
+        }
+    }
 });
 
+
     </script>
+
 
 
 </body>
