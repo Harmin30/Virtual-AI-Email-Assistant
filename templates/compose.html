@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>📧 Compose Email</title>
+    <title>Compose Email</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}?v=7">
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -17,39 +17,42 @@
     <button class="toggle-btn" onclick="toggleDarkMode()">Dark Mode</button>
 
     <!-- 📌 Sidebar -->
-<div class="sidebar" id="sidebar">
-    <div class="toggle-sidebar" onclick="toggleSidebar()">
-        <i class="fas fa-bars"></i>
+    <div class="sidebar" id="sidebar">
+        <div class="toggle-sidebar" onclick="toggleSidebar()">
+            <i class="fas fa-bars"></i>
+        </div>
+
+        <a href="{{ url_for('compose') }}" class="sidebar-btn {% if active_page == 'compose' %}active{% endif %}"
+            title="Compose">
+            <i class="fas fa-pencil-alt"></i><span>Compose</span>
+        </a>
+
+        <a href="/" class="sidebar-btn {% if active_page == 'inbox' %}active{% endif %}" title="Inbox">
+            <i class="fas fa-inbox"></i><span>Inbox</span>
+        </a>
+
+        <a href="/?filter=unread" class="sidebar-btn {% if active_page == 'unread' %}active{% endif %}" title="Unread">
+            <i class="fas fa-envelope-open-text"></i><span>Unread</span>
+        </a>
+
+        <a href="/?filter=read" class="sidebar-btn {% if active_page == 'read' %}active{% endif %}" title="Read">
+            <i class="fas fa-envelope"></i><span>Read</span>
+        </a>
+
+        <a href="/?filter=archived" class="sidebar-btn {% if active_page == 'archived' %}active{% endif %}"
+            title="Archived">
+            <i class="fas fa-archive"></i><span>Archived</span>
+        </a>
+
+        <a href="{{ url_for('sent') }}" class="sidebar-btn {% if active_page == 'sent' %}active{% endif %}"
+            title="Sent">
+            <i class="fas fa-paper-plane"></i><span>Sent</span>
+        </a>
+
+        <a href="{{ url_for('logout') }}" class="sidebar-btn logout" title="Logout">
+            <i class="fas fa-sign-out-alt"></i><span>Logout</span>
+        </a>
     </div>
-
-    <a href="{{ url_for('compose') }}" class="sidebar-btn {% if active_page == 'compose' %}active{% endif %}" title="Compose">
-        <i class="fas fa-pencil-alt"></i><span>Compose</span>
-    </a>
-
-    <a href="/" class="sidebar-btn {% if active_page == 'inbox' %}active{% endif %}" title="Inbox">
-        <i class="fas fa-inbox"></i><span>Inbox</span>
-    </a>
-
-    <a href="/?filter=unread" class="sidebar-btn {% if active_page == 'unread' %}active{% endif %}" title="Unread">
-        <i class="fas fa-envelope-open-text"></i><span>Unread</span>
-    </a>
-
-    <a href="/?filter=read" class="sidebar-btn {% if active_page == 'read' %}active{% endif %}" title="Read">
-        <i class="fas fa-envelope"></i><span>Read</span>
-    </a>
-
-    <a href="/?filter=archived" class="sidebar-btn {% if active_page == 'archived' %}active{% endif %}" title="Archived">
-        <i class="fas fa-archive"></i><span>Archived</span>
-    </a>
-
-    <a href="{{ url_for('sent') }}" class="sidebar-btn {% if active_page == 'sent' %}active{% endif %}" title="Sent">
-        <i class="fas fa-paper-plane"></i><span>Sent</span>
-    </a>
-
-    <a href="{{ url_for('logout') }}" class="sidebar-btn logout" title="Logout">
-        <i class="fas fa-sign-out-alt"></i><span>Logout</span>
-    </a>
-</div>
 
 
     <!-- 📬 Compose Form Area -->
@@ -75,8 +78,15 @@
                 </div>
                 <div class="form-group">
                     <label>Message *</label>
-                    <textarea name="message" class="form-control" rows="5" required></textarea>
+                    <textarea id="message" name="message" class="form-control" rows="5" required></textarea>
+                    <button type="button" id="micButton" onclick="toggleDictation()" class="btn btn-secondary mt-2">
+                        Start Dictation
+                    </button>
+                    <!-- <button id="enhance-btn">✨ Improve Text</button> -->
+
                 </div>
+
+
                 <div class="form-group">
                     <label>Attachments</label>
                     <input type="file" name="attachments" multiple>
@@ -119,6 +129,154 @@
             localStorage.setItem("dark-mode", document.body.classList.contains("dark-mode"));
         }
     </script>
+
+
+    <!-- Speech to Text -->
+
+    <script>
+        let isListening = false;
+        let recognition = null;
+        let finalTranscript = "";
+
+        function stopDictation() {
+            if (recognition) {
+                recognition.stop();
+            }
+            isListening = false;
+            document.getElementById("micButton").textContent = "🎤 Start Dictation";
+            document.getElementById("micButton").classList.remove("listening");
+        }
+
+        function toggleDictation() {
+            const micButton = document.getElementById("micButton");
+            const messageTextarea = document.getElementById("message");
+
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (!SpeechRecognition) {
+                alert("Speech recognition not supported in this browser.");
+                return;
+            }
+
+            if (isListening) {
+                stopDictation();
+                return;
+            }
+
+            // Always create new instance to reset state
+            recognition = new SpeechRecognition();
+            recognition.lang = "en-IN";
+            recognition.interimResults = true;
+            recognition.continuous = true;
+
+            finalTranscript = "";
+
+            function autoPunctuate(text) {
+                text = text.trim();
+                if (!text) return "";
+                text = text.charAt(0).toUpperCase() + text.slice(1);
+                if (!/[.?!]$/.test(text)) {
+                    text += ".";
+                }
+                return text + " ";
+            }
+
+            recognition.onresult = function (event) {
+                let interimTranscript = "";
+                for (let i = event.resultIndex; i < event.results.length; ++i) {
+                    const transcript = event.results[i][0].transcript;
+                    if (event.results[i].isFinal) {
+                        finalTranscript += autoPunctuate(transcript);
+                    } else {
+                        interimTranscript += transcript;
+                    }
+                }
+                messageTextarea.value = finalTranscript + interimTranscript;
+            };
+
+            function punctuateSentence(text) {
+                text = text.trim();
+                if (!text) return '';
+
+                // Capitalize first letter
+                text = text.charAt(0).toUpperCase() + text.slice(1);
+
+                // Add period if it doesn't end with . ! ?
+                if (!/[.?!]$/.test(text)) {
+                    text += '.';
+                }
+                return text;
+            }
+
+
+            recognition.onerror = function (event) {
+                console.error("Recognition error:", event.error);
+                stopDictation();
+            };
+
+            recognition.onend = function () {
+                isListening = false;
+                micButton.textContent = " Start Dictation";
+                micButton.classList.remove("listening");
+            };
+
+            recognition.start();
+            isListening = true;
+            micButton.textContent = "🛑 Stop Dictation";
+            micButton.classList.add("listening");
+        }
+    </script>
+
+
+    <!-- <script>
+
+        // Enhance TEXT:
+        document.getElementById("enhanceBtn").addEventListener("click", async () => {
+    const body = document.getElementById("emailBody").value.trim();
+
+    if (!body) return alert("Please enter some text to enhance!");
+
+    const response = await fetch("/enhance-text", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: body })
+    });
+
+    const data = await response.json();
+
+    if (data.success) {
+        document.getElementById("emailBody").value = data.enhanced;
+    } else {
+        alert("Something went wrong. Try again.");
+    }
+});
+
+    </script> -->
+<!-- 
+    <script>
+        document.getElementById("enhance-btn").addEventListener("click", async () => {
+            const inputBox = document.getElementById("dictation-box"); // Make sure your textarea/input has this ID
+            const originalText = inputBox.value.trim();
+
+            if (!originalText) return;
+
+            try {
+                const response = await fetch("/fix_grammar", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ text: originalText })
+                });
+
+                const data = await response.json();
+                inputBox.value = data.corrected;
+            } catch (error) {
+                console.error("Grammar enhancement failed:", error);
+                alert("Failed to enhance text. Please try again.");
+            }
+        });
+    </script> -->
+
+
+
 
 </body>
 

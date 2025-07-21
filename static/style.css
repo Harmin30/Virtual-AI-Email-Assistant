@@ -377,6 +377,31 @@ tr:hover {
 .btn-secondary:hover {
   background-color: #5a6268;
 }
+
+
+/* === Sidebar Styling === */
+.sidebar {
+  position: fixed;
+  top: 0;
+  right: 0; /* Sidebar on right */
+  height: 100vh;
+  width: 250px;
+  background-color: #f9f9f9;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  transition: width 0.3s ease;
+  z-index: 100;
+  border-left: 1px solid #ddd;
+  overflow: hidden;
+}
+
+/* When collapsed */
+.sidebar.collapsed {
+  width: 80px;
+}
+
+/* === Sidebar List === */
 .sidebar ul {
   list-style: none;
   padding: 0;
@@ -402,24 +427,38 @@ tr:hover {
 
 .sidebar ul li a i {
   margin-right: 10px;
+  min-width: 20px;
+  text-align: center;
 }
+
+/* === Label Visibility === */
 .nav-label {
-  transition: opacity 0.3s ease;
+  white-space: nowrap;
+  overflow: hidden;
+  transition: opacity 0.3s ease, width 0.3s ease;
 }
 
 .sidebar.collapsed .nav-label {
   opacity: 0;
+  width: 0;
 }
-/* Style for sidebar toggle button (hamburger icon) */
+
+/* === Toggle Button at Bottom === */
 .sidebar-toggle {
+  margin-top: auto; /* Push to bottom */
   display: flex;
-  justify-content: center;
+  justify-content: flex-end;
   align-items: center;
-  padding: 12px;
+  padding: 12px 20px;
   cursor: pointer;
   color: #333;
   font-size: 20px;
   transition: background 0.3s;
+  width: 100%;
+}
+
+.sidebar.collapsed .sidebar-toggle {
+  justify-content: center;
 }
 
 .sidebar-toggle:hover {
@@ -427,13 +466,10 @@ tr:hover {
   border-radius: 6px;
 }
 
-.sidebar.collapsed .sidebar-toggle {
-  justify-content: center;
-}
-
 .sidebar-toggle i {
   font-size: 20px;
 }
+
 
 
 /* ==========================
@@ -1009,4 +1045,84 @@ body.dark-mode .close-btn:hover {
     color: #ffffff;              /* Highlight text color */
     font-weight: bold;
     border-left: 4px solid #00bcd4; 
+}
+
+/* EVA Styling */
+
+.eva-mic-btn {
+  background-color: #4c8bf5;
+  border: none;
+  border-radius: 1rem;
+  /* padding: 8px 12px; */
+  padding: .7rem;
+  margin-left: 10px;
+  color: white;
+  font-size: .85rem;
+  cursor: pointer;
+  transition: 0.3s ease;
+  width: max-content;
+
+  font-style: italic;
+}
+
+
+.eva-mic-btn:hover {
+  background-color: #3a6dd8;
+}
+
+
+/* Compose mic button */
+
+#micButton {
+  margin-top: 10px;
+  margin-bottom: 1rem;
+  padding: 10px 20px;
+  font-size: 1rem;
+  font-weight: 500;
+  border: none;
+  border-radius: 30px;
+  cursor: pointer;
+  transition: background 0.3s, box-shadow 0.3s;
+  background-color: #4f46e5; /* indigo */
+  color: white;
+  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.2);
+}
+
+#micButton:hover {
+  background-color: #4338ca; /* darker indigo */
+  box-shadow: 0 6px 16px rgba(67, 56, 202, 0.3);
+}
+
+#micButton.listening {
+  background-color: #dc2626; /* red when recording */
+  box-shadow: 0 6px 16px rgba(220, 38, 38, 0.4);
+}
+
+
+#enhance-btn {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 50px;
+  padding: 10px 20px;
+  margin-left: 10px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+#enhance-btn:hover {
+  background-color: #0056b3;
+}
+
+/* 
+.highlight-word.active-word {
+    background-color: yellow;
+    border-radius: 3px;
+    padding: 0 2px;
+} */
+
+/* Global highlight color while reading */
+p::selection {
+  background: yellow;
+  color: black;
 }

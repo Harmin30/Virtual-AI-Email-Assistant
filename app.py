@@ -19,7 +19,10 @@ from werkzeug.utils import secure_filename
 from models import SentEmail, Session
 from datetime import datetime
 from flask import send_from_directory
+# from eva_voice import speak, listen
 
+from flask import request, jsonify
+# from happytransformer import HappyTextToText
 
 
 # ------------------ Load Configuration ------------------
@@ -72,6 +75,31 @@ def load_user(user_id):
 
 # ------------------ Auth Routes ------------------
  
+# EVA Voice : 
+
+@app.route('/eva-listen')
+def eva_listen():
+    query = listen()
+    if query:
+        speak(f"You said: {query}")
+    return jsonify({"message": query or "Sorry, I didn’t catch that."})
+
+
+# Load model only once
+# happy_tt = HappyTextToText("T5", "vennify/t5-base-grammar-correction")
+
+# @app.route('/fix_grammar', methods=['POST'])
+# def fix_grammar():
+#     data = request.get_json()
+#     raw_text = data.get("text", "")
+
+#     if not raw_text.strip():
+#         return jsonify({"corrected": ""})
+
+#     result = happy_tt.generate_text(f"grammar: {raw_text}")
+#     return jsonify({"corrected": result.text})
+
+
 #  Compose Email :
 
 from models import SentEmail, Session
@@ -352,6 +380,22 @@ def dashboard():
     session.close()
 
     return response
+
+# Enhance Text
+
+# @app.route("/enhance-text", methods=["POST"])
+# def enhance_text():
+#     data = request.get_json()
+#     text = data.get("text", "")
+
+#     if not text:
+#         return jsonify(success=False, error="No text provided.")
+
+
+#     enhanced = text.capitalize().strip() + " 😊"
+
+#     return jsonify(success=True, enhanced=enhanced)
+
 
 
 

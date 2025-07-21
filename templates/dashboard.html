@@ -3,11 +3,12 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Virtual Email Assistant</title>
+    <title>V E X A</title>
     <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
+<style></style>
 
 <body>
     <div class="sidebar" id="sidebar">
@@ -53,7 +54,7 @@
     <div class="main-content">
         <div class="top-bar">
             <div class="left-title">
-                <h2> Virtual Email Assistant Dashboard
+                <h2> V E X A
                     {% if current_user.is_authenticated and current_user.is_admin %}
                     <span class="admin-crown" title="Admin"></span>
                     {% endif %}
@@ -61,9 +62,16 @@
             </div>
 
             <div class="right-info">
+                <!-- EVA Mic Button -->
+                <button class="eva-mic-btn" onclick="startVoiceCommand()" title="Talk to EVA">
+                    <i class="fa-solid fa-microphone"></i> Talk to EVA</i>
+                </button>
+
                 {% if current_user.is_authenticated %}
                 <span class="user-info">👤 {{ current_user.email }}</span>
                 {% endif %}
+
+
                 <button class="toggle-btn" onclick="toggleDarkMode()">🌙 Dark Mode</button>
             </div>
         </div>
@@ -140,13 +148,21 @@
 
 
             <div class="email-details" style="display: none;">
-                <p>
+                <p id="email-body" class="email-read-body">
                     {% if email.body %}
                     {{ email.body.replace('\n', '<br>') | safe }}
                     {% else %}
                     <em>No body available.</em>
                     {% endif %}
                 </p>
+
+                <button class="read-aloud-btn" title="Read Full Email Aloud">
+                    <i class="fas fa-volume-up"></i> Read Aloud
+                </button>
+                <label for="voiceSelect" style="color: #fff; margin-right: 8px;">Voice:</label>
+                <select id="voiceSelect" style="padding: 4px; border-radius: 4px;">
+                    <option value="">Loading voices...</option>
+                </select>
 
                 {% if email.attachments %}
                 <p><strong>Attachments:</strong></p>
@@ -256,6 +272,178 @@
             });
         }
     </script>
+    <script>
+        function startVoiceCommand() {
+            if (!('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) {
+                alert("Sorry, your browser does not support speech recognition.");
+                return;
+            }
+
+            const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+            recognition.lang = 'en-US';
+            recognition.interimResults = false;
+            recognition.maxAlternatives = 1;
+
+            recognition.start();
+
+            recognition.onstart = () => {
+                alert("🎙 EVA is listening...");
+            };
+
+            recognition.onresult = function (event) {
+                const command = event.results[0][0].transcript.toLowerCase();
+                console.log("EVA heard:", command);
+
+                // Handle simple commands
+                if (command.includes("logout")) {
+                    window.location.href = "/logout";
+                } else if (command.includes("go to inbox") || command.includes("open inbox")) {
+                    window.location.href = "/dashboard";
+                } else if (command.includes("compose")) {
+                    window.location.href = "/compose";
+                } else if (command.includes("sent")) {
+                    window.location.href = "/sent";
+                } else if (command.includes("archive")) {
+                    window.location.href = "/archive";
+                } else {
+                    alert("EVA heard: " + command + " but didn’t recognize it.");
+                }
+            };
+
+            recognition.onerror = function (event) {
+                alert("Voice recognition error: " + event.error);
+            };
+
+            recognition.onend = function () {
+                console.log("EVA finished listening.");
+            };
+        }
+        // function getFemaleVoice() {
+        //     const voices = speechSynthesis.getVoices();
+        //     const englishVoices = voices.filter(voice => voice.lang.startsWith('en'));
+        //     const femaleVoice = englishVoices.find(voice =>
+        //         /female|woman|girl|zira|samantha|amelie|victoria/i.test(voice.name)
+        //     );
+        //     return femaleVoice || englishVoices[0];
+        // }
+
+        // ============================ TEXT to Speech=======================
+
+       document.addEventListener("DOMContentLoaded", () => {
+    const voiceSelect = document.getElementById("voiceSelect");
+    let voices = [];
+    let currentUtterance = null;
+    let reading = false;
+
+    function populateVoices() {
+        voices = speechSynthesis.getVoices();
+        voiceSelect.innerHTML = "";
+        voices.forEach((voice, i) => {
+            const option = document.createElement("option");
+            option.value = i;
+            option.textContent = `${voice.name} (${voice.lang}) ${voice.default ? "[default]" : ""}`;
+            voiceSelect.appendChild(option);
+        });
+
+        const indianVoice = voices.find(v => v.lang.includes("en-IN") && v.name.toLowerCase().includes("female"));
+        if (indianVoice) {
+            voiceSelect.value = voices.indexOf(indianVoice);
+        }
+    }
+
+    if (speechSynthesis.onvoiceschanged !== undefined) {
+        speechSynthesis.onvoiceschanged = populateVoices;
+    }
+    populateVoices();
+
+    document.querySelectorAll(".read-aloud-btn").forEach(button => {
+        button.addEventListener("click", () => {
+            const emailDetails = button.closest(".email-details");
+            const bodyParagraph = emailDetails.querySelector("p");
+
+            if (!bodyParagraph) return;
+
+            // If already reading, stop it
+            if (reading) {
+                speechSynthesis.cancel();
+                window.getSelection().removeAllRanges();
+                button.innerHTML = '<i class="fas fa-volume-up"></i> Read Aloud';
+                reading = false;
+                return;
+            }
+
+            const textContent = bodyParagraph.textContent;
+            if (!textContent.trim()) {
+                alert("No email body available to read.");
+                return;
+            }
+
+            const utterance = new SpeechSynthesisUtterance(textContent);
+            utterance.rate = 1;
+            utterance.pitch = 1;
+
+            const selectedIndex = voiceSelect.value;
+            if (selectedIndex !== "") {
+                utterance.voice = voices[selectedIndex];
+            }
+
+            utterance.onboundary = (event) => {
+                if (event.name === "word") {
+                    const charIndex = event.charIndex;
+
+                    const range = document.createRange();
+                    const selection = window.getSelection();
+                    selection.removeAllRanges();
+
+                    let current = bodyParagraph;
+                    let node, offset = 0;
+
+                    function walk(node) {
+                        if (node.nodeType === Node.TEXT_NODE) {
+                            const len = node.textContent.length;
+                            if (charIndex >= offset && charIndex < offset + len) {
+                                range.setStart(node, charIndex - offset);
+                                range.setEnd(node, charIndex - offset + event.charLength || 1);
+                                selection.addRange(range);
+                                return true;
+                            }
+                            offset += len;
+                        } else {
+                            for (let i = 0; i < node.childNodes.length; i++) {
+                                if (walk(node.childNodes[i])) return true;
+                            }
+                        }
+                        return false;
+                    }
+
+                    walk(current);
+                }
+            };
+
+            utterance.onend = () => {
+                reading = false;
+                button.innerHTML = '<i class="fas fa-volume-up"></i> Read Aloud';
+                window.getSelection().removeAllRanges();
+            };
+
+            utterance.onerror = () => {
+                reading = false;
+                button.innerHTML = '<i class="fas fa-volume-up"></i> Read Aloud';
+                window.getSelection().removeAllRanges();
+            };
+
+            utterance.onpause = () => window.getSelection().removeAllRanges();
+
+            button.innerHTML = '<i class="fas fa-stop"></i> Stop Reading';
+            currentUtterance = utterance;
+            reading = true;
+            speechSynthesis.speak(utterance);
+        });
+    });
+});
+
+    </script>
+
 
 </body>
 
