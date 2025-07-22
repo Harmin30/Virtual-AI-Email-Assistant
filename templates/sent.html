@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <title>📤 Sent Emails</title>
@@ -86,46 +87,51 @@
       margin-top: 15px;
     }
 
-    .sidebar, .top-bar {
+    .sidebar,
+    .top-bar {
       /* keep your existing style.css sidebar/top-bar support */
     }
+
+
   </style>
 </head>
 
 <body>
-<div class="sidebar" id="sidebar">
+  <div class="sidebar" id="sidebar">
     <div class="toggle-sidebar" onclick="toggleSidebar()">
-        <i class="fas fa-bars"></i>
+      <i class="fas fa-bars"></i>
     </div>
 
-    <a href="{{ url_for('compose') }}" class="sidebar-btn {% if active_page == 'compose' %}active{% endif %}" title="Compose">
-        <i class="fas fa-pencil-alt"></i><span>Compose</span>
+    <a href="{{ url_for('compose') }}" class="sidebar-btn {% if active_page == 'compose' %}active{% endif %}"
+      title="Compose">
+      <i class="fas fa-pencil-alt"></i><span>Compose</span>
     </a>
 
     <a href="/" class="sidebar-btn {% if active_page == 'inbox' %}active{% endif %}" title="Inbox">
-        <i class="fas fa-inbox"></i><span>Inbox</span>
+      <i class="fas fa-inbox"></i><span>Inbox</span>
     </a>
 
     <a href="/?filter=unread" class="sidebar-btn {% if active_page == 'unread' %}active{% endif %}" title="Unread">
-        <i class="fas fa-envelope-open-text"></i><span>Unread</span>
+      <i class="fas fa-envelope-open-text"></i><span>Unread</span>
     </a>
 
     <a href="/?filter=read" class="sidebar-btn {% if active_page == 'read' %}active{% endif %}" title="Read">
-        <i class="fas fa-envelope"></i><span>Read</span>
+      <i class="fas fa-envelope"></i><span>Read</span>
     </a>
 
-    <a href="/?filter=archived" class="sidebar-btn {% if active_page == 'archived' %}active{% endif %}" title="Archived">
-        <i class="fas fa-archive"></i><span>Archived</span>
+    <a href="/?filter=archived" class="sidebar-btn {% if active_page == 'archived' %}active{% endif %}"
+      title="Archived">
+      <i class="fas fa-archive"></i><span>Archived</span>
     </a>
 
     <a href="{{ url_for('sent') }}" class="sidebar-btn {% if active_page == 'sent' %}active{% endif %}" title="Sent">
-        <i class="fas fa-paper-plane"></i><span>Sent</span>
+      <i class="fas fa-paper-plane"></i><span>Sent</span>
     </a>
 
     <a href="{{ url_for('logout') }}" class="sidebar-btn logout" title="Logout">
-        <i class="fas fa-sign-out-alt"></i><span>Logout</span>
+      <i class="fas fa-sign-out-alt"></i><span>Logout</span>
     </a>
-</div>
+  </div>
 
 
   <div class="main-content">
@@ -134,7 +140,7 @@
     </div>
 
     {% for email in sent_emails %}
-    <div class="email-card" >
+    <div class="email-card" id="email-{{ email.id }}">
       <div class="email-header" onclick="toggleEmail(this)">
         <h3>{{ email.subject }}</h3>
         <i class="fas fa-chevron-down"></i>
@@ -142,6 +148,7 @@
       <div class="email-meta">To: {{ email.to }}{% if email.cc %}, CC: {{ email.cc }}{% endif %}</div>
       <div class="email-body">
         <p>{{ email.body.replace('\n', '<br>') | safe }}</p>
+
 
         {% if email.attachments %}
         <div class="attachment">
@@ -157,6 +164,14 @@
         <div class="sent-date">
           Sent on: {{ email.sent_at.strftime('%d-%m-%Y %I:%M %p') if email.sent_at else '—' }}
         </div>
+
+        <button id="delete-button" data-email-id="{{ email.id }}" class="delete-btn">
+  <i class="fas fa-trash"></i>
+</button>
+
+
+
+
       </div>
     </div>
     {% endfor %}
@@ -181,6 +196,38 @@
         icon.classList.add("fa-chevron-up");
       }
     }
+
+    document.addEventListener("DOMContentLoaded", function () {
+      const deleteBtn = document.getElementById("delete-button");
+
+      if (deleteBtn) {
+        const emailId = deleteBtn.getAttribute("data-email-id");
+
+        deleteBtn.addEventListener("click", function () {
+          if (!emailId) {
+            console.error("Email ID is missing.");
+            return;
+          }
+
+          fetch(`/delete_sent_email/${emailId}`, {
+            method: 'DELETE'
+          })
+            .then(res => res.json())
+            .then(data => {
+              if (data.success) {
+                location.reload();
+              } else {
+                alert("Failed to delete email.");
+              }
+            });
+        });
+      } else {
+        console.warn("Delete button not found in DOM.");
+      }
+    });
+
   </script>
+
 </body>
+
 </html>

@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Reminders</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+
+<body>
+  <div class="sidebar" id="sidebar">
+    <!-- Sidebar links -->
+    <a href="{{ url_for('reminders') }}" class="sidebar-btn active"><i
+        class="fas fa-bell"></i><span>Reminders</span></a>
+  </div>
+
+  <div class="main-content">
+    <div class="top-bar">
+      <h2><i class="fas fa-bell"></i> Reminders</h2>
+    </div>
+
+    <!-- Success message -->
+    <div id="success-message" style="display:none; color: green;">✅ Reminder added successfully!</div>
+
+    <!-- Reminder Form -->
+    <input type="hidden" id="reminderEmailId" name="email_id">
+    <input type="text" id="reminderSubject" name="subject">
+    <input type="text" id="reminder-time" name="reminder_time">
+    <input type="date" id="reminder-date" name="date">
+    <input type="time" id="reminder-clock" name="time">
+    <span id="reminderMessage" class="reminder-message"></span>
+
+
+    <!-- Reminder Table -->
+    <h3>📋 Your Reminders</h3>
+    <table class="reminders-table" id="remindersTable">
+      <thead>
+        <tr>
+          <th>Subject</th>
+          <th>Description</th>
+          <th>Scheduled For</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for reminder in reminders %}
+        <tr>
+          <td>{{ reminder['subject'] }}</td>
+          <td>{{ reminder['description'] }}</td>
+          <td>{{ reminder['date'] }} {{ reminder['time'] }}</td>
+          <td>
+            {% if reminder.get('reminder_sent') %}
+            Sent
+            {% else %}
+            Pending
+            {% endif %}
+          </td>
+          <td>
+            <a href="{{ url_for('delete_reminder', id=reminder['id']) }}" class="delete-btn">
+              <i class="fas fa-trash-alt"></i> Delete
+            </a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- JavaScript -->
+  <!-- <script src="{{ url_for('static', filename='js/reminder.js') }}"></script> -->
+</body>
+
+</html>

@@ -1121,20 +1121,69 @@ body.dark-mode .close-btn:hover {
     padding: 0 2px;
 } */
 
-/* Global highlight color while reading */
-/* ::selection {
-  background: #ffe066; 
-  color: #000;
-}
-
-.highlighted-word {
-    background-color: yellow;
-    color: black;
-    border-radius: 4px;
-    padding: 0 2px;
-} */
 .word.highlight {
     background-color: yellow;
     padding: 2px;
     border-radius: 3px;
 }
+
+/* Reminders */
+
+.main-container {
+    padding: 2rem;
+    color: var(--text-color);
+}
+
+.email-card {
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
+    padding: 1rem;
+    margin-bottom: 1rem;
+    border-radius: 12px;
+    box-shadow: var(--box-shadow);
+    transition: transform 0.2s;
+}
+
+.email-card:hover {
+    transform: scale(1.01);
+}
+
+/* .delete-btn {
+  background-color: transparent;
+  border: none;
+  color: red;
+  cursor: pointer;
+  font-size: 1.2rem;
+  transition: color 0.2s ease;
+}
+
+.delete-btn:hover {
+  color: darkred;
+}
+
+/* Remove blue background on click/focus */
+#delete-button {
+    background-color: red;
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+transition: transform 0.3s ease, background-color 0.3s ease;
+    transform: scale(1);
+}
+
+/* Prevent blue focus/active highlight */
+#delete-button:focus,
+#delete-button:active {
+    outline: none;
+    background-color: red;
+    box-shadow: none;
+    /* transform: scale(0.95); */
+}
+#delete-button:hover {
+    background-color: rgb(255, 0, 0);
+    transform: scale(1.1);
+}
+
+

@@ -16,10 +16,44 @@ from email.mime.base import MIMEBase
 from email import encoders
 from flask import flash
 from werkzeug.utils import secure_filename
-from models import SentEmail, Session
-from datetime import datetime
+from models import EmailStatus, User, SentEmail
+from flask_sqlalchemy import SQLAlchemy
+from flask import Flask
+
+
 from flask import send_from_directory
 # from eva_voice import speak, listen
+
+import threading
+import time
+from datetime import datetime
+# from email_model import get_due_reminders, mark_reminder_sent
+# from flask import jsonify
+
+import dateparser
+
+# from flask_sqlalchemy import SQLAlchemy
+# from flask_migrate import Migrate
+
+import sqlite3
+import datetime
+
+
+
+# Register adapter and converter for datetime
+sqlite3.register_adapter(datetime.datetime, lambda val: val.isoformat())
+sqlite3.register_converter("timestamp", lambda val: datetime.datetime.fromisoformat(val.decode("utf-8")))
+
+
+import sqlite3
+
+DATABASE = 'emails.db'
+
+def get_db_connection():
+    conn = sqlite3.connect(DATABASE)
+    conn.row_factory = sqlite3.Row
+    return conn
+
 
 from flask import request, jsonify
 # from happytransformer import HappyTextToText
@@ -35,7 +69,17 @@ SECRET_KEY = os.getenv('SECRET_KEY')
 # ------------------ Flask App Setup ------------------
 app = Flask(__name__)
 app.secret_key = SECRET_KEY
+
+# ✅ Add this config line before initializing SQLAlchemy
+# app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///emails.db'
+# app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+# ✅ Now initialize db
+# db = SQLAlchemy(app)
+# migrate = Migrate(app, db)
+
 serializer = URLSafeTimedSerializer(app.secret_key)
+
 
 # ------------------ Login Setup ------------------
 login_manager = LoginManager()
@@ -47,9 +91,59 @@ model = T5ForConditionalGeneration.from_pretrained("google/flan-t5-small")
 tokenizer = T5Tokenizer.from_pretrained("google/flan-t5-small")
 summarizer = pipeline("summarization", model="sshleifer/distilbart-cnn-12-6")
 
+
+
+# def init_reminders_table():
+#     conn = get_db_connection()
+#     cursor = conn.cursor()
+    
+#     # Create the table if it doesn't exist
+#     cursor.execute("""
+#         CREATE TABLE IF NOT EXISTS reminders (
+#             id INTEGER PRIMARY KEY AUTOINCREMENT,
+#             subject TEXT NOT NULL,
+#             reminder_time TEXT NOT NULL
+#         )
+#     """)
+    
+#     # Optional: remove 'full_datetime' if it exists (cleanup if you were testing earlier)
+#     try:
+#         cursor.execute("PRAGMA table_info(reminders)")
+#         columns = [col[1] for col in cursor.fetchall()]
+#         if 'full_datetime' in columns:
+#             # Backup old data
+#             cursor.execute("ALTER TABLE reminders RENAME TO reminders_old")
+#             cursor.execute("""
+#                 CREATE TABLE reminders (
+#                     id INTEGER PRIMARY KEY AUTOINCREMENT,
+#                     subject TEXT NOT NULL,
+#                     reminder_time TEXT NOT NULL
+#                 )
+#             """)
+#             cursor.execute("""
+#                 INSERT INTO reminders (id, subject, reminder_time)
+#                 SELECT id, subject, reminder_time FROM reminders_old
+#             """)
+#             cursor.execute("DROP TABLE reminders_old")
+#     except Exception as e:
+#         print("Error during full_datetime cleanup:", e)
+
+#     conn.commit()
+#     conn.close()
+
+
 # ------------------ Helper Functions ------------------
 
 from email_helpers import categorize_email, assign_priority
+
+
+# def extract_reminder_time(text):
+#     reminder_time = dateparser.parse(text, settings={'PREFER_DATES_FROM': 'future'})
+#     if reminder_time and reminder_time > datetime.now():
+#         return reminder_time.strftime("%Y-%m-%d %H:%M:%S")
+#     return None
+
+
 
 
 def generate_smart_reply(email_text):
@@ -328,6 +422,14 @@ def dashboard():
             session.add(new_email)
             session.commit()
 
+                        # 🧠 Try extracting reminder
+            # reminder_time = extract_reminder_time(e['subject'] + " " + e['summary'])
+            # if reminder_time:
+            #     # Fetch email id back from DB using subject, sender, timestamp
+            #     saved_email = session.query(EmailStatus).filter_by(subject=e['subject'], sender=e['from'], timestamp=ts).first()
+            #     if saved_email:
+            #         set_email_reminder(saved_email.id, reminder_time)
+
     # 📬 Filter logic
     emails_query = session.query(EmailStatus).filter_by(archived=False)
     if filter_type == 'archived':
@@ -399,6 +501,25 @@ def dashboard():
 
 
 
+# from your_app import session  # or however your session is initialized
+
+# from models import db  # adjust the path if needed
+
+from flask import jsonify
+
+@app.route('/delete_sent_email/<int:email_id>', methods=['DELETE'])
+def delete_sent_email(email_id):
+    session = Session()
+    email = session.query(SentEmail).filter_by(id=email_id).first()
+    if email:
+        session.delete(email)
+        session.commit()
+        return jsonify({"success": True})
+    return jsonify({"success": False, "error": "Email not found"})
+
+
+
+
 @app.route('/reply', methods=['POST'])
 @login_required
 def reply():
@@ -461,17 +582,93 @@ def smart_reply():
     reply = generate_smart_reply(context)
     return jsonify(reply=reply)
 
-import threading
-from background_fetcher import background_fetch_emails
+from flask import Flask, render_template, request, jsonify, redirect, url_for
+from datetime import datetime
+
+# View all reminders
+# @app.route('/reminders')
+# def reminders():
+#     conn = get_db_connection()
+#     reminders = conn.execute("SELECT * FROM reminders ORDER BY full_datetime ASC").fetchall()
+#     conn.close()
+#     return render_template('reminder.html', reminders=reminders)
 
 
 
+# @app.route('/set-reminder', methods=['POST'])
+# def set_reminder():
+#     subject = request.form.get('subject')
+#     reminder_time = request.form.get('reminder_time')
+
+#     if not subject or not reminder_time:
+#         return "Missing subject or reminder_time", 400
+
+#     conn = get_db_connection()
+#     conn.execute(
+#         "INSERT INTO reminders (subject, reminder_time) VALUES (?, ?)",
+#         (subject, reminder_time)
+#     )
+#     conn.commit()
+#     conn.close()
+
+#     return jsonify({'status': 'Reminder set successfully'}), 200
 
 
-# Start background thread
-fetch_thread = threading.Thread(target=background_fetch_emails, daemon=True)
-fetch_thread.start()
+# # Delete a reminder
+# @app.route('/delete_reminder/<int:id>')
+# def delete_reminder(id):
+#     try:
+#         conn = get_db_connection()
+#         conn.execute("DELETE FROM reminders WHERE id = ?", (id,))
+#         conn.commit()
+#         flash('Reminder deleted successfully.', 'success')
+#     except Exception as e:
+#         flash(f'Error deleting reminder: {str(e)}', 'error')
+#     finally:
+#         conn.close()
+#     return redirect('/reminders')
+
+# # API: Get due reminders
+# @app.route('/api/due-reminders')
+# def get_due_reminders():
+#     conn = get_db_connection()
+#     now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+#     rows = conn.execute("""
+#         SELECT id, subject, reminder_time FROM reminders
+#         WHERE reminder_time <= ?
+#     """, (now,)).fetchall()
+#     conn.close()
+#     reminders = [{'id': row['id'], 'subject': row['subject'], 'reminder_time': row['reminder_time']} for row in rows]
+#     return jsonify(reminders)
+
+
+# # Background checker to notify due reminders (optional console log)
+# def reminder_checker():
+#     while True:
+#         try:
+#             conn = get_db_connection()
+#             now = datetime.now()
+#             due_reminders = conn.execute("""
+#                 SELECT id, subject FROM reminders
+#                 WHERE full_datetime <= ?
+#             """, (now,)).fetchall()
+
+#             for reminder in due_reminders:
+#                 print(f"🔔 Reminder: {reminder['subject']}")
+#                 # You can also send an in-app alert/email/etc.
+
+#             conn.close()
+#         except Exception as e:
+#             print("Background reminder check error:", e)
+
+#         time.sleep(60)  # Check every 60 seconds
+
+# # Start background thread
+# reminder_thread = threading.Thread(target=reminder_checker, daemon=True)
+# reminder_thread.start()
 
 # ------------------ Run App ------------------
 if __name__ == '__main__':
     app.run(debug=True)
+
+

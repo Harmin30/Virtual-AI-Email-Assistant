@@ -1,12 +1,11 @@
-happy_tt = HappyTextToText("T5", "vennify/t5-base-grammar-correction")
+from flask import jsonify
 
-@app.route('/fix_grammar', methods=['POST'])
-def fix_grammar():
-    data = request.get_json()
-    raw_text = data.get("text", "")
-
-    if not raw_text.strip():
-        return jsonify({"corrected": ""})
-
-    result = happy_tt.generate_text(f"grammar: {raw_text}")
-    return jsonify({"corrected": result.text})
+@app.route('/delete_sent_email/<int:email_id>', methods=['DELETE'])
+def delete_sent_email(email_id):
+    session = Session()
+    email = session.query(SentEmail).filter_by(id=email_id).first()
+    if email:
+        session.delete(email)
+        session.commit()
+        return jsonify({"success": True})
+    return jsonify({"success": False, "error": "Email not found"})
