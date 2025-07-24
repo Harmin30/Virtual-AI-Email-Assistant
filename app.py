@@ -171,12 +171,240 @@ def load_user(user_id):
  
 # EVA Voice : 
 
+# @app.route('/eva-listen')
+# def eva_listen():
+#     query = listen()
+#     if query:
+#         speak(f"You said: {query}")
+#     return jsonify({"message": query or "Sorry, I didn’t catch that."})
+
+# @app.route('/eva-listen')
+# def eva_listen():
+#     import random
+#     from datetime import datetime
+
+#     query = listen()
+#     if not query:
+#         speak("Sorry, I didn’t catch that.")
+#         return jsonify({"message": "Sorry, I didn’t catch that."})
+
+#     user_input = query.lower()
+
+#     # 🎯 EVA Command Parser
+#     def parse_command(text):
+#         if "unread" in text:
+#             return {"action": "unread"}
+#         elif "read" in text and "latest" in text:
+#             return {"action": "read_latest"}
+#         elif "summarize" in text or "summary" in text:
+#             return {"action": "summarize"}
+#         elif "reply" in text or "respond" in text:
+#             return {"action": "reply"}
+#         elif "logout" in text or "log out" in text:
+#             return {"action": "logout"}
+#         elif "compose" in text or "write email" in text:
+#             return {"action": "compose"}
+#         elif "sent mail" in text or "sent" in text:
+#             return {"action": "sent"}
+#         elif "archive" in text:
+#             return {"action": "archive"}
+#         elif "inbox" in text:
+#             return {"action": "inbox"}
+#         elif "smart reply" in text:
+#             return {"action": "smart_reply"}
+#         elif "priority" in text:
+#             return {"action": "priority"}
+#         elif "reset password" in text:
+#             return {"action": "reset_password"}
+#         elif "settings" in text:
+#             return {"action": "settings"}
+#         elif "eva" in text or "help" in text:
+#             return {"action": "help"}
+#         else:
+#             return {"action": "chat"}
+
+#     # 💬 EVA Replies
+#     def generate_reply(text, action):
+#         if action["action"] == "chat":
+#             if "hi" in text or "hello" in text:
+#                 return get_greeting() + " I'm EVA, your smart assistant. 😊"
+#             elif "how are you" in text:
+#                 return random.choice([
+#                     "I'm doing great! How can I assist you?",
+#                     "Always ready to help you!",
+#                     "Feeling smart and focused today. 😎"
+#                 ])
+#             elif "thank" in text:
+#                 return "You're very welcome! 💙"
+#             elif "what can you do" in text:
+#                 return (
+#                     "I can read, summarize, reply, archive emails, and guide you with voice commands. "
+#                     "Try saying 'show unread emails' or 'compose a new email'."
+#                 )
+#             else:
+#                 return "I'm listening. Try something like 'open inbox' or 'show sent emails'."
+
+#         # 🔁 Route-specific reply
+#         return {
+#             "inbox": "Opening your inbox.",
+#             "unread": "Showing your unread emails.",
+#             "read_latest": "Reading your latest email now.",
+#             "summarize": "Summarizing recent emails.",
+#             "reply": "Ready to help you reply. What would you like to say?",
+#             "logout": "Logging you out now.",
+#             "compose": "Opening the compose email screen.",
+#             "sent": "Taking you to your sent mails.",
+#             "archive": "Opening the archive folder.",
+#             "smart_reply": "Opening smart reply options.",
+#             "priority": "Showing your priority emails.",
+#             "reset_password": "Opening password reset page.",
+#             "settings": "Opening your settings page.",
+#             "help": "I'm EVA. You can ask me to read emails, compose, summarize, or logout. Just say a command!"
+#         }.get(action["action"], "Sorry, I didn’t understand that.")
+
+#     # ⏰ Greeting by time
+#     def get_greeting():
+#         hour = datetime.now().hour
+#         if hour < 12:
+#             return "Good morning! ☀️"
+#         elif hour < 18:
+#             return "Good afternoon! 🌤️"
+#         else:
+#             return "Good evening! 🌙"
+
+#     action = parse_command(user_input)
+#     reply = generate_reply(user_input, action)
+#     speak(reply)
+
+#     return jsonify({
+#         "message": query,
+#         "reply": reply,
+#         "action": action["action"]
+#     })
+
+
+#  =============================
+
+from flask import request, jsonify
+from datetime import datetime
+import random
+
 @app.route('/eva-listen')
 def eva_listen():
-    query = listen()
-    if query:
-        speak(f"You said: {query}")
-    return jsonify({"message": query or "Sorry, I didn’t catch that."})
+    query = request.args.get('query')
+    if not query:
+        return jsonify({"message": "Sorry, I didn’t catch that."})
+
+    user_input = query.lower()
+
+    def parse_command(text):
+        commands = {
+            "unread": {"action": "unread", "redirect": "/dashboard?filter=unread"},
+            "read latest": {"action": "read_latest", "redirect": None},
+            "summarize": {"action": "summarize", "redirect": None},
+            "summary": {"action": "summarize", "redirect": None},
+            "reply": {"action": "reply", "redirect": None},
+            "respond": {"action": "reply", "redirect": None},
+            "logout": {"action": "logout", "redirect": "/logout"},
+            "log out": {"action": "logout", "redirect": "/logout"},
+            "compose": {"action": "compose", "redirect": "/compose"},
+            "write email": {"action": "compose", "redirect": "/compose"},
+            "sent mail": {"action": "sent", "redirect": "/sent"},
+            "sent": {"action": "sent", "redirect": "/sent"},
+            "archive": {"action": "archived", "redirect": "/dashboard?filter=archive"},
+            "inbox": {"action": "inbox", "redirect": "/dashboard"},
+            "smart reply": {"action": "smart_reply", "redirect": None},
+            "priority": {"action": "priority", "redirect": "/dashboard?filter=priority"},
+            "reset password": {"action": "reset_password", "redirect": "/reset-password"},
+            "settings": {"action": "settings", "redirect": "/settings"},
+            "eva": {"action": "help", "redirect": None},
+            "help": {"action": "help", "redirect": None},
+        }
+
+        for key in commands:
+            if key in text:
+                return commands[key]
+
+        return {"action": "chat", "redirect": None}
+
+    def get_greeting():
+        hour = datetime.now().hour
+        if hour < 12:
+            return "Good morning! "
+        elif hour < 18:
+            return "Good afternoon! "
+        else:
+            return "Good evening! "
+
+    def generate_reply(text, action):
+        if action["action"] == "chat":
+            if any(greet in text for greet in ["hi", "hello", "hey", "yo", "hola", "what's up"]):
+                return get_greeting() + "I'm EVA, your smart assistant. How can I help you today?"
+
+            elif "how are you" in text or "how's it going" in text:
+                return random.choice([
+                    "I'm doing great! How can I assist you?",
+                    "Feeling smart and focused today. Let's get things done.",
+                    "I'm here and ready to help. What can I do for you?"
+                ])
+
+            elif "thank" in text or "thanks" in text:
+                return random.choice([
+                    "You're very welcome! 😊",
+                    "Anytime! I'm always here to help.",
+                    "Glad I could assist. Need anything else?"
+                ])
+
+            elif "what can you do" in text or "help" in text:
+                return (
+                    "I can read, summarize, reply, archive, and compose emails for you. "
+                    "Try saying something like 'show unread emails' or 'compose a new email'."
+                )
+
+            elif "who are you" in text:
+                return "I'm EVA — your Email Virtual Assistant. I help you stay on top of your inbox smartly."
+
+            elif "bye" in text or "goodbye" in text:
+                return "Goodbye! Have a productive day ahead."
+
+            else:
+                return "I'm listening. Try something like 'open inbox', 'summarize email', or 'compose an email'."
+
+        replies = {
+            "inbox": "Opening your inbox.",
+            "unread": "Showing your unread emails.",
+            "read_latest": "Reading your latest email now.",
+            "summarize": "Summarizing recent emails.",
+            "reply": "Ready to help you reply. What would you like to say?",
+            "logout": "Logging you out now.",
+            "compose": "Opening the compose email screen.",
+            "sent": "Taking you to your sent mails.",
+            "archived": "Opening the archive folder.",
+            "smart_reply": "Opening smart reply options.",
+            "priority": "Showing your priority emails.",
+            "reset_password": "Opening password reset page.",
+            "settings": "Opening your settings page.",
+            "help": "I'm EVA. You can ask me to read emails, compose, summarize, or logout. Just say a command!"
+        }
+
+        return replies.get(action["action"], "Sorry, I didn't understand that.")
+
+    action = parse_command(user_input)
+    reply = generate_reply(user_input, action)
+
+    return jsonify({
+        "message": query,
+        "reply": reply,
+        "action": action["action"],
+        "redirect": action["redirect"]
+    })
+
+
+
+# @app.route('/dashboard')
+# def dashboard_redirect():
+#     return redirect(url_for('dashboard'))
+
 
 
 # Load model only once
@@ -377,7 +605,10 @@ def send_reset_email(to_email, link):
         print(f"❌ Email sending error: {e}")
 
 # ------------------ Dashboard & Features ------------------
+
+
 @app.route('/')
+@app.route('/dashboard') 
 @login_required
 def dashboard():
     filter_type = request.args.get('filter', 'inbox')  # ✅ Default is inbox
@@ -421,14 +652,6 @@ def dashboard():
             )
             session.add(new_email)
             session.commit()
-
-                        # 🧠 Try extracting reminder
-            # reminder_time = extract_reminder_time(e['subject'] + " " + e['summary'])
-            # if reminder_time:
-            #     # Fetch email id back from DB using subject, sender, timestamp
-            #     saved_email = session.query(EmailStatus).filter_by(subject=e['subject'], sender=e['from'], timestamp=ts).first()
-            #     if saved_email:
-            #         set_email_reminder(saved_email.id, reminder_time)
 
     # 📬 Filter logic
     emails_query = session.query(EmailStatus).filter_by(archived=False)
@@ -483,27 +706,30 @@ def dashboard():
 
     return response
 
-# Enhance Text
 
-# @app.route("/enhance-text", methods=["POST"])
-# def enhance_text():
-#     data = request.get_json()
-#     text = data.get("text", "")
+# Routes of commands
 
-#     if not text:
-#         return jsonify(success=False, error="No text provided.")
+@app.route('/inbox')
+@login_required
+def inbox():
+    return redirect(url_for('dashboard', filter='inbox'))
+
+@app.route('/archived')
+@login_required
+def archived():
+    return redirect(url_for('dashboard', filter='archived'))
+
+@app.route('/read')
+@login_required
+def read():
+    return redirect(url_for('dashboard', filter='read'))
+
+@app.route('/unread')
+@login_required
+def unread():
+    return redirect(url_for('dashboard', filter='unread'))
 
 
-#     enhanced = text.capitalize().strip() + " 😊"
-
-#     return jsonify(success=True, enhanced=enhanced)
-
-
-
-
-# from your_app import session  # or however your session is initialized
-
-# from models import db  # adjust the path if needed
 
 from flask import jsonify
 
@@ -564,14 +790,27 @@ def delete_email():
 @app.route('/archive', methods=['POST'])
 @login_required
 def archive_email():
-    subject = request.get_json().get('subject')
+    email_id = request.form.get('email_id')
     session = Session()
-    email = session.query(EmailStatus).filter_by(subject=subject).first()
+    email = session.query(EmailStatus).get(email_id)
     if email:
         email.archived = True
         session.commit()
     session.close()
-    return jsonify(success=True)
+    return redirect(url_for('dashboard'))
+
+@app.route('/unarchive', methods=['POST'])
+@login_required
+def unarchive_email():
+    email_id = request.form.get('email_id')
+    session = Session()
+    email = session.query(EmailStatus).get(email_id)
+    if email:
+        email.archived = False
+        session.commit()
+    session.close()
+    return redirect(url_for('dashboard', filter='archived'))
+
 
 @app.route('/smart_reply', methods=['POST'])
 @login_required
@@ -584,6 +823,9 @@ def smart_reply():
 
 from flask import Flask, render_template, request, jsonify, redirect, url_for
 from datetime import datetime
+
+
+
 
 # View all reminders
 # @app.route('/reminders')

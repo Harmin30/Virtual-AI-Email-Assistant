@@ -11,6 +11,7 @@
 <style></style>
 
 <body>
+
     <div class="sidebar" id="sidebar">
         <div class="toggle-sidebar" onclick="toggleSidebar()">
             <i class="fas fa-bars"></i>
@@ -21,21 +22,21 @@
             <i class="fas fa-pencil-alt"></i><span>Compose</span>
         </a>
 
-        <a href="{{ url_for('dashboard') }}" class="sidebar-btn {% if active_page == 'inbox' %}active{% endif %}"
+        <a href="{{ url_for('dashboard') }}?filter=inbox" class="sidebar-btn {% if active_page == 'inbox' %}active{% endif %}"
             title="Inbox">
             <i class="fas fa-inbox"></i><span>Inbox</span>
         </a>
 
 
-        <a href="/?filter=unread" class="sidebar-btn {% if active_page == 'unread' %}active{% endif %}" title="Unread">
+        <a href="{{ url_for('dashboard') }}?filter=unread" class="sidebar-btn {% if active_page == 'unread' %}active{% endif %}" title="Unread">
             <i class="fas fa-envelope-open-text"></i><span>Unread</span>
         </a>
 
-        <a href="/?filter=read" class="sidebar-btn {% if active_page == 'read' %}active{% endif %}" title="Read">
+        <a href="{{ url_for('dashboard') }}?filter=read" class="sidebar-btn {% if active_page == 'read' %}active{% endif %}" title="Read">
             <i class="fas fa-envelope"></i><span>Read</span>
         </a>
 
-        <a href="/?filter=archived" class="sidebar-btn {% if active_page == 'archived' %}active{% endif %}"
+        <a href="{{ url_for('dashboard') }}?filter=archived" class="sidebar-btn {% if active_page == 'archived' %}active{% endif %}"
             title="Archived">
             <i class="fas fa-archive"></i><span>Archived</span>
         </a>
@@ -63,9 +64,12 @@
 
             <div class="right-info">
                 <!-- EVA Mic Button -->
-                <button class="eva-mic-btn" onclick="startVoiceCommand()" title="Talk to EVA">
-                    <i class="fa-solid fa-microphone"></i> Talk to EVA</i>
+                <button id="evaBtn" class="eva-mic-btn" onclick="startVoiceCommand()" title="Talk to EVA">
+                    Talk to EVA </i><i class="fa-solid fa-robot"></i>
+                    <!-- <i class="fa-solid fa-microphone"></i></i> -->
                 </button>
+
+                <div id="evaLiveTranscript" style="display:none;"></div>
 
                 {% if current_user.is_authenticated %}
                 <span class="user-info">👤 {{ current_user.email }}</span>
@@ -86,9 +90,9 @@
             </form>
         </div>
 
-        {% for email in emails %}
+        <!-- {% for email in emails %}
 
-        <div class="email {{ email.classification | lower }}">
+        <div class="email {{ email.classification | lower }}" data-id="{{ email.id }}">
 
             <p><strong>From:</strong> {{ email.sender }}</p>
             <p><strong>Subject:</strong> {{ email.subject }}</p>
@@ -108,18 +112,6 @@
             {% else %}
             <span class="badge unread">🔴 Unread</span>
             <button onclick="markAsRead(this, '{{ email.subject }}')">✔️ Mark as Read</button>
-            <!-- <form id="reminderForm">
-                <input type="hidden" name="email_id" value="{{ email_id }}" placeholder="Subject">
-                <input type="text" name="subject" value="{{ subject }}">
-                <input type="datetime-local" name="reminder_time" required>
-                <button type="submit">Set Reminder</button>
-            </form> -->
-
-
-
-
-
-
             {% endif %}
 
             <form action="/reply" method="post">
@@ -128,17 +120,26 @@
                 <button type="submit"><i class="fas fa-reply"></i> Reply</button>
             </form>
 
-            <button class="small-btn archive-btn" onclick="archiveEmail('{{ email.subject }}')" title="Archive">
-                <i class="fas fa-box"></i>
-            </button>
+            {% if filter_mode == 'archived' %}
+            <form method="POST" action="{{ url_for('unarchive_email') }}">
+                <input type="hidden" name="email_id" value="{{ email.id }}">
+                <button type="submit" class="small-btn archive-btn"><i class="fas fa-box"></i> Unarchive</button>
+            </form>
+            {% else %}
+            <form method="POST" action="{{ url_for('archive_email') }}">
+                <input type="hidden" name="email_id" value="{{ email.id }}">
+                <button type="submit" class="small-btn archive-btn"><i class="fas fa-box"></i> Archive</button>
+            </form>
+            {% endif %}
 
-            <button class="small-btn delete-btn" onclick="deleteEmail('{{ email.subject }}')" title="Delete">
+            <button class="small-btn delete-btn" onclick="deleteEmail('{{ email.subject }}')" title="Delete" data-subject="{{ email.subject }}">
                 <i class="fas fa-trash"></i>
             </button>
 
         </div>
 
-        <div class="email">
+        <div class="email" data-id="{{ email.id }}" data-subject="{{ email.subject }}">
+
             <div class="email-header">
                 <strong>{{ email.subject }}</strong> - {{ email.from or email.to }}
                 <button class="toggle-details-btn" onclick="toggleDetails(this)">▼ View Details</button>
@@ -161,7 +162,7 @@
             {% endif %}
 
 
-            <div class="email-details" style="display: none;">
+            <div class="email-details" style="display: none;" data-id="{{ email.id }}">
                 <p id="email-body" class="email-read-body">
                     {% if email.body %}
                     {{ email.body.replace('\n', '<br>') | safe }}
@@ -169,15 +170,6 @@
                     <em>No body available.</em>
                     {% endif %}
                 </p>
-                <!-- <p id="email-body">
-                    <span id="email-text">
-                        {% if email.body %}
-                        {{ email.body.replace('\n', '<br>') | safe }}
-                        {% else %}
-                        <em>No body available.</em>
-                        {% endif %}
-                    </span>
-                </p> -->
 
                 <button class="read-aloud-btn" title="Read Full Email Aloud">
                     <i class="fas fa-volume-up"></i> Read Aloud
@@ -201,7 +193,94 @@
                 {% endif %}
             </div>
         </div>
+        {% endfor %} -->
+
+        {% for email in emails %}
+        <div class="email {{ email.classification | lower }}" data-id="{{ email.id }}">
+
+            <p><strong>From:</strong> {{ email.sender }}</p>
+            <p><strong>Subject:</strong> {{ email.subject }}</p>
+            <p><strong>Category:</strong> {{ email.classification }}</p>
+            <p><strong>Summary:</strong> {{ email.summary }}</p>
+            <p><strong>Priority:</strong>
+                <span class="badge priority-{{ email.priority | lower }}">{{ email.priority }}</span>
+            </p>
+            <small>{{ email.timestamp | format_datetime }}</small>
+
+            {% if email.archived %}
+            <span class="badge archived">📁 Archived</span>
+            {% endif %}
+
+            {% if email.read %}
+            <span class="badge read">✅ Read</span>
+            {% else %}
+            <span class="badge unread">🔴 Unread</span>
+            <button onclick="markAsRead(this, '{{ email.subject }}')">✔️ Mark as Read</button>
+            {% endif %}
+
+            <form action="/reply" method="post">
+                <input type="hidden" name="to" value="{{ email.sender }}">
+                <textarea name="message" rows="2" placeholder="Type your reply..." required></textarea>
+                <button type="submit"><i class="fas fa-reply"></i> Reply</button>
+            </form>
+
+            {% if filter_mode == 'archived' %}
+            <form method="POST" action="{{ url_for('unarchive_email') }}">
+                <input type="hidden" name="email_id" value="{{ email.id }}">
+                <button type="submit" class="small-btn archive-btn"><i class="fas fa-box"></i> Unarchive</button>
+            </form>
+            {% else %}
+            <form method="POST" action="{{ url_for('archive_email') }}">
+                <input type="hidden" name="email_id" value="{{ email.id }}">
+                <button type="submit" class="small-btn archive-btn"><i class="fas fa-box"></i> Archive</button>
+            </form>
+            {% endif %}
+
+            <button class="small-btn delete-btn" onclick="deleteEmail('{{ email.subject }}')" title="Delete"
+                data-subject="{{ email.subject }}">
+                <i class="fas fa-trash"></i>
+            </button>
+
+            <div class="email-header">
+                <button class="toggle-details-btn" onclick="toggleDetails(this)">▼ View Details</button>
+            </div>
+
+            <div class="email-details" style="display: none;" data-id="{{ email.id }}">
+                <p id="email-body" class="email-read-body">
+                    {% if email.body %}
+                    {{ email.body.replace('\n', '<br>') | safe }}
+                    {% else %}
+                    <em>No body available.</em>
+                    {% endif %}
+                </p>
+
+                <button class="read-aloud-btn" title="Read Full Email Aloud">
+                    <i class="fas fa-volume-up"></i> Read Aloud
+                </button>
+
+                <label class="voice-label" style="color: #fff;">Voice:</label>
+                <select class="voiceSelect" style="padding: 4px; border-radius: 4px;">
+                    <option value="">Loading voices...</option>
+                </select>
+
+                {% if email.attachments %}
+                <p><strong>Attachments:</strong></p>
+                <ul>
+                    {% for filename in email.attachments.split(',') %}
+                    <li>
+                        <a href="{{ url_for('download_attachment', filename=filename.strip()) }}" target="_blank">
+                            📎 {{ filename.strip() }}
+                        </a>
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% endif %}
+            </div>
+
+        </div>
         {% endfor %}
+
+
 
         <div class="smart-reply">
             <h3>💡 Smart Reply</h3>
@@ -213,7 +292,7 @@
         </div>
     </div>
 
-        <!-- Reminder Modal -->
+    <!-- Reminder Modal -->
     <!-- <form id="reminderForm" class="reminder-form">
 
         <input type="hidden" id="reminderEmailId" name="email_id">
@@ -237,10 +316,18 @@
         <button type="submit" class="btn btn-primary mt-2">Set Reminder</button>
     </form> -->
 
-       
 
 
-<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+
+    <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+    <!-- EVA Toast Notification -->
+    <div id="eva-toast" class="eva-toast"><i class="fa-solid fa-robot"></i> EVA is listening...</div>
+    <a href="{{ url_for('compose') }}" class="floating-compose" title="Compose">
+        <i class="fa-solid fa-pen"></i>
+    </a>
+
+
+
 
 </body>
 
