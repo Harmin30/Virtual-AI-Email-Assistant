@@ -388,7 +388,9 @@ tr:hover {
 }
 
 
-/* === Sidebar Styling === */
+/* ==========================
+      Sidebar Styling 
+ ============================ */
 .sidebar {
   position: fixed;
   top: 0;
@@ -455,7 +457,7 @@ tr:hover {
 
 /* === Toggle Button at Bottom === */
 .sidebar-toggle {
-  margin-top: auto;
+  margin-top: auto; 
   /* Push to bottom */
   display: flex;
   justify-content: flex-end;
@@ -470,7 +472,7 @@ tr:hover {
 
 .sidebar.collapsed .sidebar-toggle {
   justify-content: center;
-}
+} 
 
 .sidebar-toggle:hover {
   background: #f0f0f0;
@@ -1250,61 +1252,7 @@ body.dark-mode .close-btn:hover {
   }
 }
 
-/* EVA */
-/* .eva-toast {
-    position: fixed;
-    bottom: 30px;
-    right: 30px;
-    background-color: #222;
-    color: #fff;
-    padding: 12px 20px;
-    border-radius: 8px;
-    font-size: 14px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-    opacity: 0;
-    transform: translateY(20px);
-    transition: opacity 0.4s ease, transform 0.4s ease;
-    z-index: 9999;
-}
 
-.eva-toast.visible {
-    opacity: 1;
-    transform: translateY(0);
-}
-
-
-.eva-transcript {
-  position: fixed;
-  bottom: 90px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: #222;
-  color: #fff;
-  padding: 8px 16px;
-  border-radius: 10px;
-  font-size: 14px;
-  opacity: 0.95;
-  z-index: 10000;
-  font-family: 'Courier New', monospace;
-}
-
-.eva-mic-btn.listening {
-  background-color: #ff4d4d;
-  box-shadow: 0 0 15px 5px rgba(255, 77, 77, 0.6);
-  animation: pulse 1.5s infinite;
-}
-
-@keyframes pulse {
-  0% {
-    box-shadow: 0 0 0 0 rgba(255, 77, 77, 0.5);
-  }
-  70% {
-    box-shadow: 0 0 0 10px rgba(255, 77, 77, 0);
-  }
-  100% {
-    box-shadow: 0 0 0 0 rgba(255, 77, 77, 0);
-  }
-} */
 
 .eva-mic-btn {
   position: fixed;
@@ -1415,6 +1363,99 @@ body.dark-mode .close-btn:hover {
 
 .floating-compose i {
   font-size: 18px;
+}
+
+
+
+/* Refresh button */
+#refreshBtn {
+  padding: 4px 8px;
+  font-size: 1rem;
+  /* border: 1px solid #ccc; */
+  /* background: transparent; */
+  border-radius: 4px;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+#refreshBtn:hover {
+  background-color: #2980b9;
+  /* transform: rotate(90deg); */
+}
+
+#spinner {
+  font-size: 14px;
+  color: #555;
+  margin-top: 10px;
+}
+
+
+/* #email-container {
+  transition: opacity 0.3s ease-in-out;
+}
+.hidden {
+  opacity: 0;
+} */
+
+.email-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 10px;
+}
+
+.reminder-tag {
+  background-color: #ffc107;
+  color: #000;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 4px 8px;
+  border-radius: 12px;
+  display: inline-block;
+  animation: fadeIn 0.6s ease-in-out;
+}
+
+
+/* Reminder delete button is reminder section */
+.delete-btn-1 i {
+  color: #e74c3c;
+  /* Red */
+  font-size: 18px;
+  transition: color 0.2s ease;
+  display: flex;
+  justify-content: center;
+  margin: auto;
+  align-items: center;
+}
+
+.delete-btn-1:hover i {
+  color: #c0392b;
+  /* Darker red on hover */
+}
+
+.delete-btn-1 {
+  margin: auto;
+}
+
+/* ===================== */
+.reminder-input {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.reminder-datetime {
+  padding: 4px;
+  font-size: 14px;
+}
+
+.reminder-confirm-btn {
+  background-color: #2ecc71;
+  color: white;
+  border: none;
+  padding: 5px 10px;
+  border-radius: 4px;
+  cursor: pointer;
 }
 
 

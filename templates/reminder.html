@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <title>Reminders</title>
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}?v=10">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+
+  <style>
+    .reminders-wrapper {
+      padding: 2rem;
+
+    }
+
+    .reminders-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1.5rem;
+      padding: .3rem;
+      background-color: white;
+      /* border-radius: 10px; */
+      overflow: hidden;
+      /* box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08); */
+    }
+
+    .reminders-table th,
+    .reminders-table td {
+      padding: 1rem;
+      text-align: left;
+      /* border-bottom: 1px solid #000000;
+      border-right: 1px solid #000000; */
+
+    }
+
+    .reminders-table th {
+      background-color: #2b2f4e;
+      font-weight: 600;
+    }
+
+    .reminders-table td {
+      font-size: .9rem;
+      margin-bottom: 2rem;
+    }
+
+    .reminders-table tr:hover {
+      /* background-color: transparent !important; */
+      background-color: #f2f2f2;
+      cursor: default;
+    }
+
+
+    .delete-btn-1 {
+      color: #e74c3c;
+      text-decoration: none;
+      font-size: 1.2rem;
+    }
+
+    .delete-btn-1:hover {
+      color: #c0392b;
+    }
+
+    .top-bar h2 {
+      margin-bottom: 0;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .badge {
+      padding: 0.3em 0.6em;
+      border-radius: 5px;
+      font-size: 0.85rem;
+    }
+
+    .badge.pending {
+      background-color: #f9c74f;
+      color: #333;
+    }
+
+    .badge.read {
+      background-color: #2ecc71;
+      color: white;
+    }
+
+    .overdue {
+      background-color: #ffe6e6;
+      /* light red background */
+      border-left: 3px solid #e74c3c;
+    }
+
+    .urgent {
+      background-color: #fff4e0;
+      /* light orange background */
+      border-left: 3px solid #f39c12;
+    }
+
+    .normal {
+      background-color: #e6f4ea;
+      /* light green background */
+      border-left: 3px solid #2ecc71;
+    }
+
+    .reminder-mail td {
+      padding: 1rem;
+    }
+
+    /* ================================================= */
+
+    /* HOVER OF INFO */
+
+    .reminder-info-wrapper {
+      position: relative;
+      margin-bottom: 1.5rem;
+      padding-left: 0.3rem;
+    }
+
+    /* Info icon */
+    .info-hover {
+      position: relative;
+      display: inline-block;
+    }
+
+    #infoIcon {
+      font-size: 1.2rem;
+      color: #2b2f4e;
+      cursor: pointer;
+    }
+
+    #infoIcon:hover {
+      transform: scale(1.1);
+      transition: transform 0.2s ease;
+    }
+
+    /* Hidden by default */
+    .reminder-legend {
+      display: none;
+      position: absolute;
+      top: 24px;
+      right: 0;
+      background-color: #f3f3f3;
+      border-radius: 6px;
+      padding: 1rem;
+      font-size: 0.9rem;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      width: max-content;
+      z-index: 10;
+      white-space: nowrap;
+    }
+
+    /* Show legend on hover */
+    .info-hover:hover .reminder-legend {
+      display: block;
+    }
+
+    .reminder-legend ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .reminder-legend li {
+      margin-bottom: 0.4rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .legend-box {
+      width: 16px;
+      height: 16px;
+      border-radius: 3px;
+      display: inline-block;
+    }
+
+    .overdue-box {
+      background-color: #ffe6e6;
+      border-left: 4px solid #e74c3c;
+    }
+
+    .urgent-box {
+      background-color: #fff4e0;
+      border-left: 4px solid #f39c12;
+    }
+
+    .normal-box {
+      background-color: #e6f4ea;
+      border-left: 4px solid #2ecc71;
+    }
+
+    /* ============================
+  TESTING of reminder table css
+  ============================*/
+
+    .reminders-table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0 12px;
+      /* Adds vertical spacing between rows */
+      margin-top: 1.5rem;
+      background-color: transparent
+        /* Prevent double backgrounds */
+    }
+
+    .reminders-table thead th {
+      background-color: #2b2f4e;
+      color: white;
+      font-weight: 600;
+      padding: 1rem;
+      text-align: left;
+
+    }
+
+    .reminders-table td {
+      background-color: white;
+      font-size: 1rem;
+      padding: 1.2rem;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      position: relative;
+      z-index: 1;
+
+    }
+
+    /* Hover effect with scale and subtle shadow */
+    .reminders-table tbody tr:hover td {
+      transform: scale(1.02);
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+      z-index: 5;
+      background-color: #f9f9f9;
+    }
+
+    /* Rounded corners for the first and last columns on each row */
+    .reminders-table tbody tr td:first-child {
+      border-top-left-radius: 8px;
+      border-bottom-left-radius: 8px;
+    }
+
+    .reminders-table tbody tr td:last-child {
+      border-top-right-radius: 8px;
+      border-bottom-right-radius: 8px;
+    }
+
+    .overdue td {
+      background-color: #ffe6e6 !important;
+      border-left: 3px solid #e74c3c;
+    }
+
+    .urgent td {
+      background-color: #fff4e0 !important;
+      border-left: 3px solid #f39c12;
+    }
+
+    .normal td {
+      background-color: #e6f4ea !important;
+      border-left: 3px solid #2ecc71;
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Sidebar -->
+  <div class="sidebar" id="sidebar">
+    <div class="toggle-sidebar" onclick="toggleSidebar()">
+      <i class="fas fa-bars"></i>
+    </div>
+
+    <a href="{{ url_for('compose') }}" class="sidebar-btn {% if active_page == 'compose' %}active{% endif %}">
+      <i class="fas fa-pencil-alt"></i><span>Compose</span>
+    </a>
+
+    <a href="{{ url_for('dashboard') }}?filter=inbox"
+      class="sidebar-btn {% if active_page == 'inbox' %}active{% endif %}">
+      <i class="fas fa-inbox"></i><span>Inbox</span>
+    </a>
+
+    <a href="{{ url_for('dashboard') }}?filter=unread"
+      class="sidebar-btn {% if active_page == 'unread' %}active{% endif %}">
+      <i class="fas fa-envelope-open-text"></i><span>Unread</span>
+    </a>
+
+    <a href="{{ url_for('dashboard') }}?filter=read"
+      class="sidebar-btn {% if active_page == 'read' %}active{% endif %}">
+      <i class="fas fa-envelope"></i><span>Read</span>
+    </a>
+
+    <a href="{{ url_for('dashboard') }}?filter=archived"
+      class="sidebar-btn {% if active_page == 'archived' %}active{% endif %}">
+      <i class="fas fa-archive"></i><span>Archived</span>
+    </a>
+
+    <a href="{{ url_for('sent') }}" class="sidebar-btn {% if active_page == 'sent' %}active{% endif %}">
+      <i class="fas fa-paper-plane"></i><span>Sent</span>
+    </a>
+
+    <a href="{{ url_for('reminders') }}" class="sidebar-btn {% if active_page == 'reminder' %}active{% endif %}">
+      <i class="fas fa-bell"></i><span>Reminders</span>
+    </a>
+
+    <a href="{{ url_for('logout') }}" class="sidebar-btn logout">
+      <i class="fas fa-sign-out-alt"></i><span>Logout</span>
+    </a>
+  </div>
+
+  <!-- Main Content -->
+  <div class="main-content">
+    <div class="top-bar">
+      <h2><i class="fas fa-bell"></i> Reminders</h2>
+      <div class="reminder-info-wrapper">
+        <div class="info-hover">
+          <i class="fas fa-info-circle" id="infoIcon" title="Reminder Color Guide"></i>
+          <div class="reminder-legend">
+            <ul>
+              <ul>
+                <li><span class="legend-box overdue-box"></span> <strong>Overdue:</strong> Deadline has passed </li>
+                <li><span class="legend-box urgent-box"></span> <strong>Urgent:</strong> Due within 6 hours</li>
+                <li><span class="legend-box normal-box"></span> <strong>Upcoming:</strong> Scheduled for later</li>
+              </ul>
+
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="reminders-wrapper">
+      {% if reminders %}
+      <table class="reminders-table">
+        <thead>
+          <tr>
+            <th>Subject</th>
+            <th>Description</th>
+            <th>Scheduled For</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for reminder in reminders %}
+          <tr class="{{ get_urgency_class(reminder.timestamp) }}" class="reminder-mail">
+            <td>{{ reminder.subject }}</td>
+            <td>{{ reminder.summary or 'No description' }}</td>
+            <td>{{ reminder.timestamp.strftime('%I:%M %p, %d %b %Y') }}</td>
+
+            <td>
+              <span class="badge {{ 'read' if reminder.read else 'pending' }}">
+                {{ 'Read' if reminder.read else 'Pending' }}
+              </span>
+            </td>
+            <td>
+              <a href="{{ url_for('delete_reminder', id=reminder.id) }}" class="delete-btn-1" title="Delete Reminder">
+                <i class="fas fa-trash-alt"></i>
+              </a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <p>No reminders found.</p>
+      {% endif %}
+    </div>
+  </div>
+
+
+  <!-- Scripts -->
+  <script src="{{ url_for('static', filename='js/reminder.js') }}?v=1"></script>
+  <script src="{{ url_for('static', filename='js/dashboard.js') }}?v=9"></script>
+</body>
+
+</html>

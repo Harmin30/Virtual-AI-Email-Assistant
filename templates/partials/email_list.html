@@ -1,0 +1,120 @@
+{% for email in emails %}
+<div class="email {{ email.classification | lower }}" data-id="{{ email.id }}">
+
+    <p><strong>From:</strong> {{ email.sender }} </p>
+    <p><strong>Subject:</strong> {{ email.subject }}</p>
+    <p><strong>Category:</strong> {{ email.classification }}</p>
+    <p><strong>Summary:</strong> {{ email.summary }}</p>
+    <p><strong>Priority:</strong>
+        <span class="badge priority-{{ email.priority | lower }}">{{ email.priority }}</span>
+    </p>
+    <div class="email-footer">
+
+
+        <!-- Reminded tag (initially hidden if not reminded) -->
+
+    </div>
+    <small>{{ email.timestamp | format_datetime }}</small>
+
+    {% if email.archived %}
+    <span class="badge archived">📁 Archived</span>
+    {% endif %}
+
+    {% if email.read %}
+    <span class="badge read">✅ Read</span>
+    {% else %}
+    <span class="badge unread">🔴 Unread</span>
+    <button onclick="markAsRead(this, '{{ email.subject }}')">✔️ Mark as Read</button>
+    {% endif %}
+
+    <form action="/reply" method="post">
+        <input type="hidden" name="to" value="{{ email.sender }}">
+        <textarea name="message" rows="2" placeholder="Type your reply..." required></textarea>
+        <button type="submit"><i class="fas fa-reply"></i> Reply</button>
+    </form>
+
+    {% if filter_mode == 'archived' %}
+    <form method="POST" action="{{ url_for('unarchive_email') }}">
+        <input type="hidden" name="email_id" value="{{ email.id }}">
+        <button type="submit" class="small-btn archive-btn"><i class="fas fa-box"></i> Unarchive</button>
+    </form>
+    {% else %}
+    <form method="POST" action="{{ url_for('archive_email') }}">
+        <input type="hidden" name="email_id" value="{{ email.id }}">
+        <button type="submit" class="small-btn archive-btn"><i class="fas fa-box"></i> Archive</button>
+    </form>
+    {% endif %}
+
+    <button class="small-btn delete-btn" onclick="deleteEmail('{{ email.subject }}')" title="Delete"
+        data-subject="{{ email.subject }}">
+        <i class="fas fa-trash"></i>
+    </button>
+    <!-- <button class="reminder-btn" data-email-id="{{ email.id }}">
+        <i class="fas fa-bell"></i> Set Reminder
+    </button>
+    <span id="reminder-tag-{{ email.id }}" class="reminder-tag"
+        style="{% if not email.reminder %}display: none;{% endif %}">
+        🔔 Reminded
+    </span> -->
+    <!-- Buttons and tags go here -->
+    <button id="reminder-btn-{{ email.id }}" class="reminder-btn" data-email-id="{{ email.id }}">
+        {% if email.reminder %}
+        ❌ Remove Reminder
+        {% else %}
+        🔔 Set Reminder
+        {% endif %}
+    </button>
+    <!-- DateTime Picker (only visible when setting reminder) -->
+<div id="reminder-input-{{ email.id }}" class="reminder-input" style="display: none; margin-top: 5px;">
+    <input type="datetime-local" id="reminder-time-{{ email.id }}" class="reminder-datetime" />
+    <button onclick="sendReminderTime({{ email.id }})">✅ Confirm</button>
+
+</div>
+<!-- Optional Tag UI -->
+<span id="reminder-tag-{{ email.id }}" class="reminder-tag" data-reminder="{{ email.reminder }}" style="{% if not email.reminder %}display: none;{% endif %}">
+   Reminder Set
+  <!-- <div class="urgency-bar" id="urgency-bar-{{ email.id }}"></div> -->
+</span>
+
+
+
+
+
+    <div class="email-header">
+        <button class="toggle-details-btn" onclick="toggleDetails(this)">▼ View Details</button>
+    </div>
+
+    <div class="email-details" style="display: none;" data-id="{{ email.id }}">
+        <p id="email-body" class="email-read-body">
+            {% if email.body %}
+            {{ email.body.replace('\n', '<br>') | safe }}
+            {% else %}
+            <em>No body available.</em>
+            {% endif %}
+        </p>
+
+        <button class="read-aloud-btn" title="Read Full Email Aloud">
+            <i class="fas fa-volume-up"></i> Read Aloud
+        </button>
+
+        <label class="voice-label" style="color: #fff;">Voice:</label>
+        <select class="voiceSelect" style="padding: 4px; border-radius: 4px;">
+            <option value="">Loading voices...</option>
+        </select>
+
+        {% if email.attachments %}
+        <p><strong>Attachments:</strong></p>
+        <ul>
+            {% for filename in email.attachments.split(',') %}
+            <li>
+                <a href="{{ url_for('download_attachment', filename=filename.strip()) }}" target="_blank">
+                    📎 {{ filename.strip() }}
+                </a>
+            </li>
+            {% endfor %}
+        </ul>
+        {% endif %}
+    </div>
+
+</div>
+{% endfor %}

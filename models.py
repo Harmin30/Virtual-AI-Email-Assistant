@@ -7,7 +7,7 @@ from datetime import datetime
 # 🚀 Base class for SQLAlchemy
 Base = declarative_base()
 
-# 📩 EmailStatus model
+
 # 📩 EmailStatus model
 class EmailStatus(Base):
     __tablename__ = 'email_status'
@@ -23,7 +23,9 @@ class EmailStatus(Base):
     priority = Column(String(10), default='Low')
     smart_reply = Column(Text)
     body = Column(Text)
-    attachments = Column(Text)   # ✅ Add this line
+    attachments = Column(Text)
+    reminder = Column(Boolean, default=False)
+   
 
 
 # 👤 User model

@@ -1,0 +1,47 @@
+<div class="sidebar" id="sidebar">
+    <div class="toggle-sidebar" onclick="toggleSidebar()">
+        <i class="fas fa-bars"></i>
+    </div>
+
+    <a href="{{ url_for('compose') }}" class="sidebar-btn {% if active_page == 'compose' %}active{% endif %}"
+        title="Compose">
+        <i class="fas fa-pencil-alt"></i><span>Compose</span>
+    </a>
+
+    <a href="{{ url_for('dashboard') }}?filter=inbox"
+        class="sidebar-btn {% if active_page == 'inbox' %}active{% endif %}" title="Inbox">
+        <i class="fas fa-inbox"></i><span>Inbox</span>
+    </a>
+
+    <a href="{{ url_for('dashboard') }}?filter=unread"
+        class="sidebar-btn {% if active_page == 'unread' %}active{% endif %}" title="Unread">
+        <i class="fas fa-envelope-open-text"></i><span>Unread</span>
+    </a>
+
+    <a href="{{ url_for('dashboard') }}?filter=read" class="sidebar-btn {% if active_page == 'read' %}active{% endif %}"
+        title="Read">
+        <i class="fas fa-envelope"></i><span>Read</span>
+    </a>
+
+    <a href="{{ url_for('dashboard') }}?filter=archived"
+        class="sidebar-btn {% if active_page == 'archived' %}active{% endif %}" title="Archived">
+        <i class="fas fa-archive"></i><span>Archived</span>
+    </a>
+
+    <a href="{{ url_for('sent') }}" class="sidebar-btn {% if active_page == 'sent' %}active{% endif %}" title="Sent">
+        <i class="fas fa-paper-plane"></i><span>Sent</span>
+    </a>
+
+    <a href="{{ url_for('reminders') }}" class="sidebar-btn {% if active_page == 'reminder' %}active{% endif %}"
+        title="Reminders">
+        <i class="fas fa-bell"></i>
+        <span>Reminders</span>
+        <span id="reminderCount" class="notification-badge">0</span>
+    </a>
+
+
+
+    <a href="{{ url_for('logout') }}" class="sidebar-btn logout" title="Logout">
+        <i class="fas fa-sign-out-alt"></i><span>Logout</span>
+    </a>
+</div>

@@ -351,6 +351,7 @@ def fetch_emails(email_address, imap_password):
                     )
                     session.add(reminder)
                     session.commit()
+                    
 
             session.close()
 

@@ -91,8 +91,6 @@
     .top-bar {
       /* keep your existing style.css sidebar/top-bar support */
     }
-
-
   </style>
 </head>
 
@@ -127,6 +125,11 @@
     <a href="{{ url_for('sent') }}" class="sidebar-btn {% if active_page == 'sent' %}active{% endif %}" title="Sent">
       <i class="fas fa-paper-plane"></i><span>Sent</span>
     </a>
+    <a href="{{ url_for('reminders') }}" class="sidebar-btn {% if active_page == 'reminder' %}active{% endif %}"
+      title="Reminders">
+      <i class="fas fa-bell"></i><span>Reminders</span>
+    </a>
+
 
     <a href="{{ url_for('logout') }}" class="sidebar-btn logout" title="Logout">
       <i class="fas fa-sign-out-alt"></i><span>Logout</span>
@@ -166,8 +169,8 @@
         </div>
 
         <button id="delete-button" data-email-id="{{ email.id }}" class="delete-btn">
-  <i class="fas fa-trash"></i>
-</button>
+          <i class="fas fa-trash"></i>
+        </button>
 
 
 

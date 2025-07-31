@@ -22,22 +22,24 @@
             <i class="fas fa-pencil-alt"></i><span>Compose</span>
         </a>
 
-        <a href="{{ url_for('dashboard') }}?filter=inbox" class="sidebar-btn {% if active_page == 'inbox' %}active{% endif %}"
-            title="Inbox">
+        <a href="{{ url_for('dashboard') }}?filter=inbox"
+            class="sidebar-btn {% if active_page == 'inbox' %}active{% endif %}" title="Inbox">
             <i class="fas fa-inbox"></i><span>Inbox</span>
         </a>
 
 
-        <a href="{{ url_for('dashboard') }}?filter=unread" class="sidebar-btn {% if active_page == 'unread' %}active{% endif %}" title="Unread">
+        <a href="{{ url_for('dashboard') }}?filter=unread"
+            class="sidebar-btn {% if active_page == 'unread' %}active{% endif %}" title="Unread">
             <i class="fas fa-envelope-open-text"></i><span>Unread</span>
         </a>
 
-        <a href="{{ url_for('dashboard') }}?filter=read" class="sidebar-btn {% if active_page == 'read' %}active{% endif %}" title="Read">
+        <a href="{{ url_for('dashboard') }}?filter=read"
+            class="sidebar-btn {% if active_page == 'read' %}active{% endif %}" title="Read">
             <i class="fas fa-envelope"></i><span>Read</span>
         </a>
 
-        <a href="{{ url_for('dashboard') }}?filter=archived" class="sidebar-btn {% if active_page == 'archived' %}active{% endif %}"
-            title="Archived">
+        <a href="{{ url_for('dashboard') }}?filter=archived"
+            class="sidebar-btn {% if active_page == 'archived' %}active{% endif %}" title="Archived">
             <i class="fas fa-archive"></i><span>Archived</span>
         </a>
 
@@ -46,10 +48,16 @@
             <i class="fas fa-paper-plane"></i><span>Sent</span>
         </a>
 
+        <a href="{{ url_for('reminders') }}" class="sidebar-btn {% if active_page == 'reminder' %}active{% endif %}"
+            title="Reminders">
+            <i class="fas fa-bell"></i><span>Reminders</span>
+        </a>
+
         <a href="{{ url_for('logout') }}" class="sidebar-btn logout" title="Logout">
             <i class="fas fa-sign-out-alt"></i><span>Logout</span>
         </a>
     </div>
+
 
 
     <div class="main-content">
@@ -87,6 +95,15 @@
                     value="{{ query }}">
                 <input type="hidden" name="filter" value="{{ filter_mode }}">
                 <button type="submit"><i class="fas fa-search"></i> Search</button>
+
+                <button id="refreshBtn" class="btn btn-sm btn-outline-secondary" title="Refresh">
+                    <i class="fas fa-sync-alt"></i> <!-- Font Awesome icon -->
+                </button>
+                <!-- Spinner hidden by default -->
+                <div id="spinner" style="display: none;">
+                    <i class="fas fa-spinner fa-spin"></i> Refreshing...
+                </div>
+
             </form>
         </div>
 
@@ -194,91 +211,9 @@
             </div>
         </div>
         {% endfor %} -->
-
-        {% for email in emails %}
-        <div class="email {{ email.classification | lower }}" data-id="{{ email.id }}">
-
-            <p><strong>From:</strong> {{ email.sender }}</p>
-            <p><strong>Subject:</strong> {{ email.subject }}</p>
-            <p><strong>Category:</strong> {{ email.classification }}</p>
-            <p><strong>Summary:</strong> {{ email.summary }}</p>
-            <p><strong>Priority:</strong>
-                <span class="badge priority-{{ email.priority | lower }}">{{ email.priority }}</span>
-            </p>
-            <small>{{ email.timestamp | format_datetime }}</small>
-
-            {% if email.archived %}
-            <span class="badge archived">📁 Archived</span>
-            {% endif %}
-
-            {% if email.read %}
-            <span class="badge read">✅ Read</span>
-            {% else %}
-            <span class="badge unread">🔴 Unread</span>
-            <button onclick="markAsRead(this, '{{ email.subject }}')">✔️ Mark as Read</button>
-            {% endif %}
-
-            <form action="/reply" method="post">
-                <input type="hidden" name="to" value="{{ email.sender }}">
-                <textarea name="message" rows="2" placeholder="Type your reply..." required></textarea>
-                <button type="submit"><i class="fas fa-reply"></i> Reply</button>
-            </form>
-
-            {% if filter_mode == 'archived' %}
-            <form method="POST" action="{{ url_for('unarchive_email') }}">
-                <input type="hidden" name="email_id" value="{{ email.id }}">
-                <button type="submit" class="small-btn archive-btn"><i class="fas fa-box"></i> Unarchive</button>
-            </form>
-            {% else %}
-            <form method="POST" action="{{ url_for('archive_email') }}">
-                <input type="hidden" name="email_id" value="{{ email.id }}">
-                <button type="submit" class="small-btn archive-btn"><i class="fas fa-box"></i> Archive</button>
-            </form>
-            {% endif %}
-
-            <button class="small-btn delete-btn" onclick="deleteEmail('{{ email.subject }}')" title="Delete"
-                data-subject="{{ email.subject }}">
-                <i class="fas fa-trash"></i>
-            </button>
-
-            <div class="email-header">
-                <button class="toggle-details-btn" onclick="toggleDetails(this)">▼ View Details</button>
-            </div>
-
-            <div class="email-details" style="display: none;" data-id="{{ email.id }}">
-                <p id="email-body" class="email-read-body">
-                    {% if email.body %}
-                    {{ email.body.replace('\n', '<br>') | safe }}
-                    {% else %}
-                    <em>No body available.</em>
-                    {% endif %}
-                </p>
-
-                <button class="read-aloud-btn" title="Read Full Email Aloud">
-                    <i class="fas fa-volume-up"></i> Read Aloud
-                </button>
-
-                <label class="voice-label" style="color: #fff;">Voice:</label>
-                <select class="voiceSelect" style="padding: 4px; border-radius: 4px;">
-                    <option value="">Loading voices...</option>
-                </select>
-
-                {% if email.attachments %}
-                <p><strong>Attachments:</strong></p>
-                <ul>
-                    {% for filename in email.attachments.split(',') %}
-                    <li>
-                        <a href="{{ url_for('download_attachment', filename=filename.strip()) }}" target="_blank">
-                            📎 {{ filename.strip() }}
-                        </a>
-                    </li>
-                    {% endfor %}
-                </ul>
-                {% endif %}
-            </div>
-
+        <div id="email-container">
+            {% include 'partials/email_list.html' %}
         </div>
-        {% endfor %}
 
 
 

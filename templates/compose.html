@@ -48,7 +48,12 @@
             title="Sent">
             <i class="fas fa-paper-plane"></i><span>Sent</span>
         </a>
-    
+        <a href="{{ url_for('reminders') }}" class="sidebar-btn {% if active_page == 'reminder' %}active{% endif %}"
+            title="Reminders">
+            <i class="fas fa-bell"></i><span>Reminders</span>
+        </a>
+
+
 
         <a href="{{ url_for('logout') }}" class="sidebar-btn logout" title="Logout">
             <i class="fas fa-sign-out-alt"></i><span>Logout</span>
@@ -81,7 +86,7 @@
                     <label>Message *</label>
                     <textarea id="message" name="message" class="form-control" rows="5" required></textarea>
                     <button type="button" id="micButton" onclick="toggleDictation()" class="btn btn-secondary mt-2">
-                       <i class="fa-solid fa-microphone"></i>  Start Dictation  
+                        <i class="fa-solid fa-microphone"></i> Start Dictation
                     </button>
                     <!-- <button id="enhance-btn">✨ Improve Text</button> -->
 
@@ -252,7 +257,7 @@
 });
 
     </script> -->
-<!-- 
+    <!-- 
     <script>
         document.getElementById("enhance-btn").addEventListener("click", async () => {
             const inputBox = document.getElementById("dictation-box"); // Make sure your textarea/input has this ID

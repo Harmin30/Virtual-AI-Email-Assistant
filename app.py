@@ -19,6 +19,10 @@ from werkzeug.utils import secure_filename
 from models import EmailStatus, User, SentEmail
 from flask_sqlalchemy import SQLAlchemy
 from flask import Flask
+from datetime import datetime
+
+
+
 
 
 from flask import send_from_directory
@@ -604,6 +608,37 @@ def send_reset_email(to_email, link):
     except Exception as e:
         print(f"❌ Email sending error: {e}")
 
+@app.route('/refresh-emails')
+@login_required
+def refresh_emails():
+    filter_type = request.args.get('filter', 'inbox')
+    query = request.args.get('query', '').lower()
+    session = Session()
+
+    try:
+        # ✅ Pull new emails from Gmail before loading from DB
+        fetch_emails(EMAIL, APP_PASSWORD)
+
+        # Now load from DB
+        emails = session.query(EmailStatus).order_by(EmailStatus.timestamp.desc()).all()
+
+        if filter_type == 'unread':
+            emails = [e for e in emails if not e.read]
+        elif filter_type == 'archived':
+            emails = [e for e in emails if e.archived]
+        elif filter_type == 'inbox':
+            emails = [e for e in emails if not e.archived]
+
+        if query:
+            emails = [e for e in emails if query in e.subject.lower() or query in e.sender.lower()]
+
+        return render_template('partials/email_list.html', emails=emails)
+    except Exception as e:
+        print(f"❌ Error during /refresh-emails: {e}")
+        return "Internal Server Error", 500
+
+
+
 # ------------------ Dashboard & Features ------------------
 
 
@@ -825,89 +860,88 @@ from flask import Flask, render_template, request, jsonify, redirect, url_for
 from datetime import datetime
 
 
+@app.route('/reminders')
+@login_required
+def reminders():
+    session = Session()
+    reminders = session.query(EmailStatus).filter_by(reminder=True).all()
+
+    from datetime import datetime
+    for r in reminders:
+        print(f"🕒 Reminder: {r.timestamp}, Now: {datetime.now()}, Delta: {r.timestamp - datetime.now()}")
+
+    return render_template('reminder.html', reminders=reminders, active_page='reminder', get_urgency_class=get_urgency_class)
 
 
-# View all reminders
-# @app.route('/reminders')
-# def reminders():
-#     conn = get_db_connection()
-#     reminders = conn.execute("SELECT * FROM reminders ORDER BY full_datetime ASC").fetchall()
-#     conn.close()
-#     return render_template('reminder.html', reminders=reminders)
+from datetime import datetime
+
+@app.route('/set-reminder/<int:email_id>', methods=['POST'])
+@login_required
+def set_reminder(email_id):
+    session = Session()
+    email = session.query(EmailStatus).filter_by(id=email_id).first()
+    
+    if email:
+        reminder_time_str = request.form.get('reminder_time')  # e.g., "07/25/2025 03:30 PM"
+        try:
+            reminder_time = datetime.strptime(reminder_time_str, "%m/%d/%Y %I:%M %p")
+            email.reminder = True
+            email.timestamp = reminder_time  # ✅ Store it as datetime
+            session.commit()
+            return jsonify({'success': True})
+        except Exception as e:
+            print("❌ Time parsing error:", e)
+            return jsonify({'success': False, 'error': 'Invalid time format'})
+    
+    return jsonify({'success': False})
 
 
+@app.route('/toggle-reminder/<int:email_id>', methods=['POST'])
+def toggle_reminder(email_id):
+    data = request.get_json(silent=True)
+    reminder_time = data.get('reminder_time') if data else None
 
-# @app.route('/set-reminder', methods=['POST'])
-# def set_reminder():
-#     subject = request.form.get('subject')
-#     reminder_time = request.form.get('reminder_time')
+    session = Session()
+    email = session.query(EmailStatus).get(email_id)
 
-#     if not subject or not reminder_time:
-#         return "Missing subject or reminder_time", 400
-
-#     conn = get_db_connection()
-#     conn.execute(
-#         "INSERT INTO reminders (subject, reminder_time) VALUES (?, ?)",
-#         (subject, reminder_time)
-#     )
-#     conn.commit()
-#     conn.close()
-
-#     return jsonify({'status': 'Reminder set successfully'}), 200
-
-
-# # Delete a reminder
-# @app.route('/delete_reminder/<int:id>')
-# def delete_reminder(id):
-#     try:
-#         conn = get_db_connection()
-#         conn.execute("DELETE FROM reminders WHERE id = ?", (id,))
-#         conn.commit()
-#         flash('Reminder deleted successfully.', 'success')
-#     except Exception as e:
-#         flash(f'Error deleting reminder: {str(e)}', 'error')
-#     finally:
-#         conn.close()
-#     return redirect('/reminders')
-
-# # API: Get due reminders
-# @app.route('/api/due-reminders')
-# def get_due_reminders():
-#     conn = get_db_connection()
-#     now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-#     rows = conn.execute("""
-#         SELECT id, subject, reminder_time FROM reminders
-#         WHERE reminder_time <= ?
-#     """, (now,)).fetchall()
-#     conn.close()
-#     reminders = [{'id': row['id'], 'subject': row['subject'], 'reminder_time': row['reminder_time']} for row in rows]
-#     return jsonify(reminders)
+    if email:
+        if reminder_time:
+            email.reminder = True
+            email.reminder_time = reminder_time  # Save the time
+        else:
+            email.reminder = not email.reminder
+            if not email.reminder:
+                email.reminder_time = None
+        session.commit()
+        return jsonify({'success': True, 'reminder': email.reminder})
+    return jsonify({'success': False}), 404
 
 
-# # Background checker to notify due reminders (optional console log)
-# def reminder_checker():
-#     while True:
-#         try:
-#             conn = get_db_connection()
-#             now = datetime.now()
-#             due_reminders = conn.execute("""
-#                 SELECT id, subject FROM reminders
-#                 WHERE full_datetime <= ?
-#             """, (now,)).fetchall()
+@app.route('/delete-reminder/<int:id>')
+@login_required
+def delete_reminder(id):
+    session = Session()
+    email = session.query(EmailStatus).filter_by(id=id).first()
+    if email:
+        email.reminder = False  # ✅ Correct column name
+        session.commit()
+    session.close()
+    return redirect(url_for('reminders'))
 
-#             for reminder in due_reminders:
-#                 print(f"🔔 Reminder: {reminder['subject']}")
-#                 # You can also send an in-app alert/email/etc.
+from datetime import datetime, timedelta
 
-#             conn.close()
-#         except Exception as e:
-#             print("Background reminder check error:", e)
+from datetime import datetime, timedelta
 
-#         time.sleep(60)  # Check every 60 seconds
+def get_urgency_class(timestamp):
+    now = datetime.now()
+    if timestamp < now:
+        return 'overdue'         # 🔴 Time has already passed
+    elif timestamp <= now + timedelta(hours=6):
+        return 'urgent'          # 🟠 Within the next 6 hours
+    else:
+        return 'normal'          # 🟢 Future reminders
 
-# # Start background thread
-# reminder_thread = threading.Thread(target=reminder_checker, daemon=True)
-# reminder_thread.start()
+
 
 # ------------------ Run App ------------------
 if __name__ == '__main__':

@@ -1,4 +1,7 @@
 
+window.addEventListener('load', () => {
+    loadVoicesAndSetEVA();
+});
 
 // Sidebar and dark mode
 window.toggleSidebar = () => document.getElementById('sidebar').classList.toggle('collapsed');
@@ -46,83 +49,7 @@ window.deleteEmail = (subject) => {
     });
 };
 
-// Archive Email
-// window.archiveEmail = (id) => {
-//     fetch('/archive', {
-//         method: 'POST',
-//         headers: { 'Content-Type': 'application/json' },
-//         body: JSON.stringify({ id })
-//     })
-//     .then(res => res.json())
-//     .then(data => {
-//         if (data.success) {
-//             // Remove the email card
-//             const emailCard = document.querySelector(`.email[data-id="${id}"]`);
-//             if (emailCard) {
-//                 emailCard.remove();
-//             }
 
-//             // Remove the detailed body section
-//             const detailsSection = document.querySelector(`.email-details[data-id="${id}"]`);
-//             if (detailsSection) {
-//                 detailsSection.remove();
-//             }
-
-//             // Show a toast or inline confirmation
-//             showToast("Email archived ✅");
-//         }
-//     });
-// };
-
-// window.unarchiveEmail = (id) => {
-//     fetch('/unarchive', {
-//         method: 'POST',
-//         headers: { 'Content-Type': 'application/json' },
-//         body: JSON.stringify({ id })
-//     })
-//     .then(res => res.json())
-//     .then(data => {
-//         if (data.success) {
-//             const emailCard = document.querySelector(`.email[data-id="${id}"]`);
-//             if (emailCard) emailCard.remove();
-
-//             const detailsSection = document.querySelector(`.email-details[data-id="${id}"]`);
-//             if (detailsSection) detailsSection.remove();
-
-//             showToast("Email unarchived ✅");
-//         }
-//     });
-// };
-
-
-// Toast function (add once globally)
-// function showToast(message) {
-//     let toast = document.createElement('div');
-//     toast.textContent = message;
-//     toast.style.cssText = `
-//         position: fixed;
-//         bottom: 20px;
-//         right: 20px;
-//         background: #333;
-//         color: white;
-//         padding: 10px 20px;
-//         border-radius: 8px;
-//         box-shadow: 0 0 10px rgba(0,0,0,0.3);
-//         z-index: 9999;
-//         opacity: 0;
-//         transition: opacity 0.5s ease-in-out;
-//     `;
-//     document.body.appendChild(toast);
-//     requestAnimationFrame(() => {
-//         toast.style.opacity = 1;
-//     });
-//     setTimeout(() => {
-//         toast.style.opacity = 0;
-//         setTimeout(() => toast.remove(), 5000);
-//     }, 5000); // visible for 2 sec
-// }
-
-// DELETE button for the email cards on email dashboard
 
 
 function deleteEmail(subject, id) {
@@ -144,184 +71,14 @@ function deleteEmail(subject, id) {
 }
 
 
-// Voice Command (EVA)
-// window.startVoiceCommand = () => {
-//     if (!('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) {
-//         alert("Sorry, your browser does not support speech recognition.");
-//         return;
-//     }
-
-//     const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
-//     recognition.lang = 'en-US';
-//     recognition.interimResults = false;
-//     recognition.maxAlternatives = 1;
-
-//     recognition.start();
-
-//     recognition.onstart = () => alert("🎙 EVA is listening...");
-//     recognition.onresult = (event) => {
-//         const command = event.results[0][0].transcript.toLowerCase();
-//         if (command.includes("logout")) location.href = "/logout";
-//         else if (command.includes("inbox")) location.href = "/dashboard";
-//         else if (command.includes("compose")) location.href = "/compose";
-//         else if (command.includes("sent")) location.href = "/sent";
-//         else if (command.includes("archive")) location.href = "/archive";
-//         else alert(`EVA heard: ${command} but didn’t recognize it.`);
-//     };
-
-//     recognition.onerror = (event) => alert("Voice recognition error: " + event.error);
-//     recognition.onend = () => console.log("EVA finished listening.");
-// };
-
-
-
-// Toast message function
-
-
-// let isListening = false;
-// let recognition = null;
-// let evaToast = null;
-// let selectedVoice = null;
-
-// // EVA Speak Function
-// function evaSpeak(text) {
-//     if (!window.speechSynthesis) {
-//         showEVAToast("🔇 Your browser does not support speech synthesis.");
-//         return;
-//     }
-
-//     const utterance = new SpeechSynthesisUtterance(text);
-//     utterance.voice = selectedVoice;
-//     utterance.lang = 'en-US';
-//     utterance.rate = 1;
-//     utterance.pitch = 1;
-
-//     window.speechSynthesis.cancel(); // Cancel ongoing speech if any
-//     window.speechSynthesis.speak(utterance);
-// }
-
-// // Load and select preferred female voice
-// function loadEVAVoice() {
-//     const voices = window.speechSynthesis.getVoices();
-//     selectedVoice =
-//         voices.find(v => v.name.includes("Google UK English Female")) ||
-//         voices.find(v => v.name.toLowerCase().includes("female")) ||
-//         voices.find(v => v.lang === "en-IN") ||
-//         voices.find(v => v.lang === "en-US") ||
-//         voices[0];
-// }
-// window.speechSynthesis.onvoiceschanged = loadEVAVoice;
-// loadEVAVoice();
-
-// // Toast messages
-// function showEVAToast(message, sticky = false) {
-//     if (evaToast) evaToast.remove();
-//     evaToast = document.createElement('div');
-//     evaToast.className = 'eva-toast';
-//     evaToast.innerText = message;
-//     document.body.appendChild(evaToast);
-//     setTimeout(() => evaToast.classList.add('visible'), 100);
-
-//     if (!sticky) {
-//         setTimeout(() => {
-//             evaToast.classList.remove('visible');
-//             setTimeout(() => evaToast.remove(), 500);
-//         }, 3000);
-//     }
-// }
-
-// // Start voice recognition
-// function startVoiceRecognition() {
-//     recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
-//     recognition.lang = 'en-US';
-//     recognition.interimResults = true;
-//     recognition.maxAlternatives = 1;
-
-//     const transcriptBox = document.getElementById('evaLiveTranscript');
-//     transcriptBox.style.display = 'block';
-//     transcriptBox.innerText = '';
-
-//     recognition.onresult = (event) => {
-//         const interimTranscript = Array.from(event.results)
-//             .map(r => r[0].transcript)
-//             .join('');
-//         transcriptBox.innerText = `🎧 EVA: ${interimTranscript}`;
-
-//         if (event.results[0].isFinal) {
-//             const command = event.results[0][0].transcript.toLowerCase().trim();
-//             transcriptBox.innerText = '';
-
-//             // Recognized commands
-//             if (command.includes("logout")) {
-//                 evaSpeak("Logging you out.");
-//                 location.href = "/logout";
-//             } else if (command.includes("inbox")) {
-//                 evaSpeak("Opening your inbox.");
-//                 location.href = "/dashboard";
-//             } else if (command.includes("compose")) {
-//                 evaSpeak("Let's compose a new email.");
-//                 location.href = "/compose";
-//             } else if (command.includes("sent")) {
-//                 evaSpeak("Here are your sent emails.");
-//                 location.href = "/sent";
-//             } else if (command.includes("archive")) {
-//                 evaSpeak("Opening archive.");
-//                 location.href = "/archive";
-//             } else {
-//                 evaSpeak(`I heard: "${command}", but I didn’t recognize that command.`);
-//                 showEVAToast(`🤖 EVA heard: "${command}" but didn’t recognize it.`);
-//             }
-//         }
-//     };
-
-//     recognition.onerror = (event) => {
-//         showEVAToast(`⚠️ Voice error: ${event.error}`);
-//         evaSpeak("There was a problem with voice recognition.");
-//     };
-
-//     recognition.onend = () => {
-//         if (isListening) recognition.start(); // Auto-restart
-//     };
-
-//     recognition.start();
-//     showEVAToast("🎙 EVA is listening...", true);
-//     const btn = document.getElementById("evaBtn");
-//     btn.classList.add("listening");
-//     btn.innerHTML = `Stop EVA <i class="fa-solid fa-microphone-slash"></i>`;
-// }
-
-// // Stop voice recognition
-// function stopVoiceRecognition() {
-//     if (recognition) {
-//         recognition.stop();
-//         recognition = null;
-//     }
-//     isListening = false;
-//     showEVAToast("🛑 EVA stopped listening");
-
-//     const btn = document.getElementById("evaBtn");
-//     btn.classList.remove("listening");
-//     btn.innerHTML = `Talk to EVA <i class="fa-solid fa-robot"></i>`;
-//     document.getElementById('evaLiveTranscript').style.display = 'none';
-// }
-
-// // Toggle voice command
-// window.startVoiceCommand = () => {
-//     if (!('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) {
-//         showEVAToast("❌ Browser doesn't support voice recognition.");
-//         return;
-//     }
-
-//     isListening ? stopVoiceRecognition() : (isListening = true, startVoiceRecognition());
-// };
-
-
-// ==================================================================
+// =============================EVA VOICE AI=====================================
 
 let isListening = false;
 let recognition = null;
 let evaToast = null;
 let selectedVoice = null;
+let isReading = false; // 👈 Controls auto-refresh during TTS
+
 loadVoicesAndSetEVA();
 
 // EVA Speak Function
@@ -348,23 +105,61 @@ function evaSpeak(text) {
 
 
 // Load and select preferred female voice
+// function loadVoicesAndSetEVA() {
+//     return new Promise(resolve => {
+//         let voices = speechSynthesis.getVoices();
+
+//         if (voices.length) {
+//             resolve(voices);
+//         } else {
+//             speechSynthesis.onvoiceschanged = () => {
+//                 voices = speechSynthesis.getVoices();
+//                 resolve(voices);
+//             };
+//         }
+//     }).then(voices => {
+//         evaVoice =
+//             voices.find(v => v.name.toLowerCase().includes("google uk english female")) ||
+//             voices.find(v => v.name.toLowerCase().includes("zira")) ||
+//             voices.find(v => v.name.toLowerCase().includes("samantha")) ||
+//             voices.find(v => v.name.toLowerCase().includes("female")) ||
+//             voices.find(v => v.lang === "en-IN") ||
+//             voices.find(v => v.lang === "en-US") ||
+//             voices[0];
+
+//         if (evaVoice) {
+//             console.log(`✅ EVA voice set to: ${evaVoice.name} (${evaVoice.lang})`);
+//         } else {
+//             console.warn("⚠️ EVA voice not found, using default.");
+//         }
+//     });
+// }
+
 function loadVoicesAndSetEVA() {
     return new Promise(resolve => {
         let voices = speechSynthesis.getVoices();
 
-        if (voices.length) {
+        function setVoices() {
+            voices = speechSynthesis.getVoices();
+            if (voices.length > 0) {
+                resolve(voices);
+            } else {
+                // Try again after short delay if voices not loaded yet
+                setTimeout(setVoices, 100);
+            }
+        }
+
+        if (voices.length > 0) {
             resolve(voices);
         } else {
-            speechSynthesis.onvoiceschanged = () => {
-                voices = speechSynthesis.getVoices();
-                resolve(voices);
-            };
+            speechSynthesis.onvoiceschanged = setVoices;
+            setVoices(); // initial attempt
         }
     }).then(voices => {
         evaVoice =
+            voices.find(v => v.name.toLowerCase().includes("samantha")) ||
             voices.find(v => v.name.toLowerCase().includes("google uk english female")) ||
             voices.find(v => v.name.toLowerCase().includes("zira")) ||
-            voices.find(v => v.name.toLowerCase().includes("samantha")) ||
             voices.find(v => v.name.toLowerCase().includes("female")) ||
             voices.find(v => v.lang === "en-IN") ||
             voices.find(v => v.lang === "en-US") ||
@@ -378,7 +173,7 @@ function loadVoicesAndSetEVA() {
     });
 }
 
-// Call this once at the top
+
 
 
 // Toast messages
@@ -509,11 +304,6 @@ window.startVoiceCommand = () => {
 };
 
 
-
-
-
-
-
 // TTS Reader
 let voices = [];
 function populateVoices() {
@@ -543,6 +333,7 @@ document.querySelectorAll(".read-aloud-btn").forEach(button => {
 
         if (speechSynthesis.speaking || speechSynthesis.pending) {
             speechSynthesis.cancel();
+            isReading = false; // 👈 Reset if stopped early
             restoreOriginalHTML(bodyElement);
             button.innerHTML = `<i class="fas fa-volume-up"></i> Read Aloud`;
             return;
@@ -586,6 +377,9 @@ document.querySelectorAll(".read-aloud-btn").forEach(button => {
 
         button.innerHTML = `<i class="fas fa-stop"></i> Stop`;
 
+        // ✅ Mark reading in progress
+        isReading = true;
+
         utterance.onboundary = function (event) {
             if (event.name === "word") {
                 if (wordIndex > 0 && spans[wordIndex - 1]) spans[wordIndex - 1].classList.remove("highlight");
@@ -597,16 +391,19 @@ document.querySelectorAll(".read-aloud-btn").forEach(button => {
         utterance.onend = () => {
             restoreOriginalHTML(bodyElement);
             button.innerHTML = `<i class="fas fa-volume-up"></i> Read Aloud`;
+            isReading = false; // ✅ Resume refresh after reading
         };
 
         utterance.onerror = () => {
             restoreOriginalHTML(bodyElement);
             button.innerHTML = `<i class="fas fa-volume-up"></i> Read Aloud`;
+            isReading = false; // ✅ Resume even on error
         };
 
         speechSynthesis.speak(utterance);
     });
 });
+
 
 function restoreOriginalHTML(bodyElement) {
     const original = bodyElement.getAttribute("data-original-html");
@@ -615,52 +412,223 @@ function restoreOriginalHTML(bodyElement) {
         bodyElement.removeAttribute("data-original-html");
     }
 }
-// function setReminderManually(subjectValue, reminderTimeValue) {
-//     fetch('/set-reminder', {
-//         method: 'POST',
-//         headers: {
-//             'Content-Type': 'application/json'
-//         },
-//         body: JSON.stringify({
-//             subject: subjectValue,
-//             reminder_time: reminderTimeValue
-//         })
-//     })
-//     .then(response => response.json())
-//     .then(data => {
-//         alert("Reminder set!");
-//     })
-//     .catch(err => {
-//         console.error("Failed to set reminder", err);
-//         alert("Something went wrong");
-//     });
-// }
-// setReminderManually("Follow up email", "2025-07-21 18:00");
 
 
-//     // Reminder checker
-//     function checkReminders() {
-//         fetch('/api/due-reminders')
-//             .then(res => res.json())
-//             .then(data => {
-//                 if (data.length > 0) {
-//                     data.forEach(reminder => {
-//                         alert(`🔔 Reminder: "${reminder.subject}" from ${reminder.sender}`);
-//                     });
-//                     location.reload();
-//                 }
-//             })
-//             .catch(err => console.error("Reminder check failed", err));
-//     }
+// Refresh 
 
-//     setInterval(checkReminders, 60000); // every 60 seconds
-//     checkReminders(); // initial load
+const emailContainer = document.getElementById('email-container');
+const spinner = document.getElementById('spinner');
+const refreshBtn = document.getElementById('refreshBtn');
 
-//     // Modal helper
-//     window.openReminderModal = (emailId) => {
-//         document.getElementById('reminderEmailId').value = emailId;
-//         $('#reminderModal').modal('show');
-//     };
-// });
+// ✅ Only run the logic if emailContainer exists (i.e., we are on the dashboard page)
+if (emailContainer) {
+    let autoRefreshPaused = false;
+
+    function showSpinner() {
+        if (spinner) spinner.style.display = 'inline-block';
+    }
+
+    function hideSpinner() {
+        if (spinner) spinner.style.display = 'none';
+    }
+
+    function updateEmailList() {
+        if (typeof isReading !== "undefined" && isReading) {
+            console.log("🔇 Skipped refresh — read aloud in progress");
+            return;
+        }
+
+        showSpinner();
+        const start = Date.now();
+        const minTime = 800;
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const query = urlParams.get('query') || '';
+        const filter = urlParams.get('filter') || 'inbox';
+
+        fetch(`/refresh-emails?filter=${filter}&query=${query}`)
+            .then(res => {
+                const delay = Math.max(0, minTime - (Date.now() - start));
+                if (res.status === 204) {
+                    console.log("✅ No new emails");
+                    setTimeout(hideSpinner, delay);
+                    return null;
+                } else if (res.ok) {
+                    return res.text().then(html => {
+                        setTimeout(() => {
+                            if (emailContainer.innerHTML.trim() !== html.trim()) {
+                                emailContainer.innerHTML = html;
+                                console.log("✅ Email list updated");
+                            } else {
+                                console.log("ℹ️ No DOM changes, skipped update");
+                            }
+                            hideSpinner();
+                        }, delay);
+                    });
+                } else {
+                    throw new Error("Refresh failed");
+                }
+            })
+            .catch(err => {
+                console.error("❌ Refresh error:", err);
+                hideSpinner();
+            });
+    }
+
+    // Manual Refresh
+    if (refreshBtn) {
+        refreshBtn.addEventListener('click', updateEmailList);
+    } else {
+        console.warn("⚠️ Refresh button not found");
+    }
+
+    // Auto Refresh every 60 seconds
+    setInterval(() => {
+        if (!autoRefreshPaused && !(typeof isReading !== "undefined" && isReading)) {
+            updateEmailList();
+        } else if (typeof isReading !== "undefined" && isReading) {
+            console.log("⏸️ Skipped refresh — read aloud active");
+        } else {
+            console.log("⏸️ Skipped refresh — user is typing");
+        }
+    }, 60000);
+
+    // Pause on input focus
+    emailContainer.addEventListener('focusin', (e) => {
+        const tag = e.target.tagName.toLowerCase();
+        if (tag === 'input' || tag === 'textarea') {
+            autoRefreshPaused = true;
+            console.log("✋ Auto-refresh paused while typing...");
+        }
+    });
+
+    // Resume when focus is lost
+    emailContainer.addEventListener('focusout', (e) => {
+        setTimeout(() => {
+            if (!emailContainer.querySelector(':focus')) {
+                autoRefreshPaused = false;
+                console.log("▶️ Auto-refresh resumed");
+            }
+        }, 200);
+    });
+} else {
+    console.log("ℹ️ Skipped email refresh logic — not on dashboard");
+}
+
+
+
+document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('.reminder-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const emailId = btn.dataset.emailId;
+            const inputDiv = document.getElementById(`reminder-input-${emailId}`);
+
+            if (btn.textContent.includes('Set Reminder')) {
+                // Show date-time input
+                inputDiv.style.display = 'block';
+            } else {
+                // Remove reminder directly
+                fetch(`/toggle-reminder/${emailId}`, { method: 'POST' })
+                    .then(res => res.json())
+                    .then(data => {
+                        const tag = document.getElementById(`reminder-tag-${emailId}`);
+                        if (data.reminder === false) {
+                            tag.style.display = 'none';
+                            btn.innerHTML = '🔔 Set Reminder';
+                        }
+                    });
+            }
+        });
+    });
+});
+
+// Confirm button: send the selected reminder time
+function sendReminderTime(emailId) {
+    const datetimeInput = document.getElementById(`reminder-time-${emailId}`);
+    const reminderWrapper = document.getElementById(`reminder-input-${emailId}`);
+    const reminderTag = document.getElementById(`reminder-tag-${emailId}`);
+    const reminderTime = datetimeInput.value;
+
+    if (!reminderTime) {
+        showReminderToast("⚠️ Please select a date and time.");
+        return;
+    }
+
+    const dateObj = new Date(reminderTime);
+    const formattedTime = formatTo12Hour(dateObj);
+
+    fetch(`/set-reminder/${emailId}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: new URLSearchParams({
+            reminder_time: formattedTime
+        })
+    })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                reminderTag.style.display = 'inline';
+                reminderTag.setAttribute('data-reminder', formattedTime);
+                reminderWrapper.style.display = 'none';
+                showReminderToast("✅ Reminder set!");
+            } else {
+                showReminderToast("❌ Failed to set reminder.");
+            }
+        });
+}
+
+function formatTo12Hour(date) {
+    const mm = String(date.getMonth() + 1).padStart(2, '0');
+    const dd = String(date.getDate()).padStart(2, '0');
+    const yyyy = date.getFullYear();
+
+    let hours = date.getHours();
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    const ampm = hours >= 12 ? 'PM' : 'AM';
+
+    hours = hours % 12;
+    hours = hours ? hours : 12; // hour 0 should be 12
+
+    return `${mm}/${dd}/${yyyy} ${hours}:${minutes} ${ampm}`;
+}
+
+// Urgency bar
+function updateReminderUrgencyBars() {
+    const now = new Date();
+
+    document.querySelectorAll('.reminder-tag').forEach(tag => {
+        const reminderStr = tag.getAttribute('data-reminder');
+        if (!reminderStr) return;
+
+        const reminderTime = new Date(reminderStr);
+        const diffMs = reminderTime - now;
+        const diffHrs = diffMs / (1000 * 60 * 60);
+
+        const emailId = tag.id.split('-')[2]; // Extract ID from 'reminder-tag-{{ email.id }}'
+        const bar = document.getElementById(`urgency-bar-${emailId}`);
+        if (!bar) return;
+
+        bar.classList.remove('urgency-red', 'urgency-yellow', 'urgency-green');
+
+        if (diffHrs < 1) {
+            bar.classList.add('urgency-red');
+        } else if (diffHrs < 6) {
+            bar.classList.add('urgency-yellow');
+        } else {
+            bar.classList.add('urgency-green');
+        }
+    });
+}
+
+// Run on page load
+document.addEventListener('DOMContentLoaded', updateReminderUrgencyBars);
+
+// Optional: live update every 60 seconds
+setInterval(updateReminderUrgencyBars, 60000);
+
+
+// Reminder notification count
 
 
