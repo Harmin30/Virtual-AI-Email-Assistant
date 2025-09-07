@@ -4,17 +4,170 @@
 <head>
     <meta charset="UTF-8">
     <title>Compose Email</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}?v=7">
-
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}?v=8">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+    <style>
+        /* ==== Compose Page Styling ==== */
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background-color: var(--bg-color, #f4f6f8);
+            margin: 0;
+        }
+
+        .main-content {
+            margin-left: 220px;
+            padding: 30px;
+            transition: margin-left 0.3s ease;
+        }
+
+        .compose-card {
+            background: var(--card-bg, #fff);
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            max-width: 700px;
+            margin: auto;
+        }
+
+        .compose-card h3 {
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            color: var(--text-color, #222);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 18px;
+        }
+
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 6px;
+            color: var(--text-color, #444);
+        }
+
+        .form-control {
+            width: 97%;
+            padding: 10px 12px;
+            font-size: 0.95rem;
+            border: 1px solid var(--border-color, #ccc);
+            border-radius: 6px;
+            outline: none;
+            transition: border 0.2s;
+        }
+
+        .form-control:focus {
+            border-color: #6c63ff;
+            box-shadow: 0 0 0 2px rgba(108, 99, 255, 0.2);
+        }
+
+        textarea.form-control {
+            resize: vertical;
+        }
+
+        /* Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 18px;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            font-weight: 500;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s ease;
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #4CAF50, #45A049);
+            color: #fff;
+        }
+
+        .btn-success:hover {
+            background: linear-gradient(135deg, #45A049, #3e8e41);
+        }
+
+        .btn-secondary {
+            background: #ddd;
+            color: #333;
+        }
+
+        .btn-secondary:hover {
+            background: #ccc;
+        }
+
+        #micButton {
+            background: #2b2f4e;
+            color: white;
+            border: none;
+            margin-top: 8px;
+        }
+
+        #micButton:hover {
+            background: #474e82;
+        }
+
+        .listening {
+            background: #ff4d4d !important;
+        }
+
+        /* Dark Mode */
+        body.dark-mode {
+            --bg-color: #1e1e2f;
+            --card-bg: #2b2f4e;
+            --text-color: #f4f4f4;
+            --border-color: #444;
+        }
+
+        .compose-actions {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .btn-schedule {
+            border-radius: 50%;
+            width: 42px;
+            height: 42px;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            background: #f1f3f4;
+            /* light mode */
+            color: #5f6368;
+            border: none;
+            transition: background 0.2s;
+        }
+
+        .btn-schedule:hover {
+            background: #e8eaed;
+        }
+
+        /* Dark mode styling */
+        body.dark-mode .btn-schedule {
+            background: #3c4043;
+            color: #e8eaed;
+        }
+
+        body.dark-mode .btn-schedule:hover {
+            background: #5f6368;
+        }
+    </style>
 </head>
 
 <body>
 
-    <!-- 🌙 Dark Mode Toggle -->
-    <button class="toggle-btn" onclick="toggleDarkMode()">Dark Mode</button>
+    <button class="toggle-btn" onclick="toggleDarkMode()" id="darkModeToggle">
+        <i class="fas fa-moon"></i>
+    </button>
 
     <!-- 📌 Sidebar -->
     <div class="sidebar" id="sidebar">
@@ -22,134 +175,172 @@
             <i class="fas fa-bars"></i>
         </div>
 
-        <a href="{{ url_for('compose') }}" class="sidebar-btn {% if active_page == 'compose' %}active{% endif %}"
-            title="Compose">
+        <a href="{{ url_for('compose') }}" class="sidebar-btn active" title="Compose">
             <i class="fas fa-pencil-alt"></i><span>Compose</span>
         </a>
 
-        <a href="/" class="sidebar-btn {% if active_page == 'inbox' %}active{% endif %}" title="Inbox">
+        <a href="/" class="sidebar-btn" title="Inbox">
             <i class="fas fa-inbox"></i><span>Inbox</span>
         </a>
 
-        <a href="/?filter=unread" class="sidebar-btn {% if active_page == 'unread' %}active{% endif %}" title="Unread">
+        <a href="/?filter=unread" class="sidebar-btn" title="Unread">
             <i class="fas fa-envelope-open-text"></i><span>Unread</span>
         </a>
 
-        <a href="/?filter=read" class="sidebar-btn {% if active_page == 'read' %}active{% endif %}" title="Read">
+        <a href="/?filter=read" class="sidebar-btn" title="Read">
             <i class="fas fa-envelope"></i><span>Read</span>
         </a>
 
-        <a href="/?filter=archived" class="sidebar-btn {% if active_page == 'archived' %}active{% endif %}"
-            title="Archived">
+        <a href="/?filter=archived" class="sidebar-btn" title="Archived">
             <i class="fas fa-archive"></i><span>Archived</span>
         </a>
 
-        <a href="{{ url_for('sent') }}" class="sidebar-btn {% if active_page == 'sent' %}active{% endif %}"
-            title="Sent">
+        <a href="{{ url_for('sent') }}" class="sidebar-btn" title="Sent">
             <i class="fas fa-paper-plane"></i><span>Sent</span>
         </a>
-        <a href="{{ url_for('reminders') }}" class="sidebar-btn {% if active_page == 'reminder' %}active{% endif %}"
-            title="Reminders">
+
+        <a href="{{ url_for('reminders') }}" class="sidebar-btn" title="Reminders">
             <i class="fas fa-bell"></i><span>Reminders</span>
         </a>
 
-
+        {% if current_user.is_authenticated and current_user.is_admin %}
+        <a href="{{ url_for('user_management') }}" class="sidebar-btn">
+            <i class="fas fa-users-cog"></i><span>User Management</span>
+        </a>
+        {% endif %}
 
         <a href="{{ url_for('logout') }}" class="sidebar-btn logout" title="Logout">
             <i class="fas fa-sign-out-alt"></i><span>Logout</span>
         </a>
     </div>
 
-
     <!-- 📬 Compose Form Area -->
     <div class="main-content">
         <div class="compose-card card">
-            <h3 style="text-align: center;">📧 Compose Email</h3>
+            <h3><i class="fas fa-envelope"></i> Compose Email</h3>
             <form action="{{ url_for('compose') }}" method="post" enctype="multipart/form-data">
                 <div class="form-group">
                     <label>To *</label>
-                    <input type="email" name="to" class="form-control" required>
+                    <input type="email" name="to" class="form-control" placeholder="recipient@example.com" required>
                 </div>
                 <div class="form-group">
                     <label>CC</label>
-                    <input type="email" name="cc" class="form-control">
+                    <input type="email" name="cc" class="form-control" placeholder="cc@example.com">
                 </div>
                 <div class="form-group">
                     <label>BCC</label>
-                    <input type="email" name="bcc" class="form-control">
+                    <input type="email" name="bcc" class="form-control" placeholder="bcc@example.com">
                 </div>
                 <div class="form-group">
                     <label>Subject *</label>
-                    <input type="text" name="subject" class="form-control" required>
+                    <input type="text" name="subject" class="form-control" placeholder="Enter subject" required>
                 </div>
                 <div class="form-group">
                     <label>Message *</label>
-                    <textarea id="message" name="message" class="form-control" rows="5" required></textarea>
-                    <button type="button" id="micButton" onclick="toggleDictation()" class="btn btn-secondary mt-2">
+                    <textarea id="message" name="message" class="form-control" rows="6"
+                        placeholder="Write your message here..." required></textarea>
+                    <button type="button" id="micButton" onclick="toggleDictation()" class="btn">
                         <i class="fa-solid fa-microphone"></i> Start Dictation
                     </button>
-                    <!-- <button id="enhance-btn">✨ Improve Text</button> -->
+                    <!-- <button type="button" class="btn btn-secondary" onclick="improveGrammar()">Improve Grammar</button> -->
 
                 </div>
-
-
                 <div class="form-group">
                     <label>Attachments</label>
                     <input type="file" name="attachments" multiple>
                 </div>
-                <div style="display: flex; justify-content: space-between;">
-                    <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">← Back</a>
-                    <button type="submit" class="btn btn-success">Send Email</button>
-                </div>
+
+                <!-- Action buttons -->
+                <div style="display: flex; justify-content: space-between; margin-top: 20px;">
+                    <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Back
+                    </a>
+                    <div class="compose-actions">
+                        <!-- Send Now -->
+                        <button type="submit" name="action" value="send" class="btn btn-success">
+                            <i class="fas fa-paper-plane"></i> Send
+                        </button>
+
+                        <!-- Schedule Send (clock icon) -->
+                        <!-- <button type="button" class="btn btn-schedule" onclick="toggleSchedule()" title="Schedule Send">
+                            <i class="fas fa-clock"></i>
+                        </button>
+                    </div>
+                </div> -->
+
+                        <!-- Hidden schedule picker -->
+                        <!-- <div id="schedule-picker" style="display:none; margin-top:10px;">
+                    <label for="scheduled_time">Choose Date & Time:</label>
+                    <input type="datetime-local" name="scheduled_time" id="scheduled_time" required>
+                    <button type="submit" name="action" value="schedule" class="btn btn-info">
+                        <i class="fas fa-check"></i> Confirm
+                    </button>
+                </div> -->
             </form>
         </div>
     </div>
 
-    <!-- ✅ Inline JS for Sidebar & Dark Mode -->
-    <script>
-        function toggleDarkMode() {
-            document.body.classList.toggle("dark-mode");
+    <!-- <script>
+        function toggleSchedule() {
+            const picker = document.getElementById("schedule-picker");
+            picker.style.display = (picker.style.display === "none") ? "block" : "none";
         }
+    </script> -->
 
+    <script>
+        function improveGrammar() {
+            const bodyField = document.getElementById("message");  // ✅ fix here
+            if (!bodyField) {
+                console.error("Textarea with id='message' not found!");
+                return;
+            }
+
+            fetch("/improve_grammar", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ text: bodyField.value })
+            })
+                .then(res => res.json())
+                .then(data => {
+                    bodyField.value = data.improved;
+                })
+                .catch(err => console.error("Grammar API error:", err));
+        }
+    </script>
+
+
+
+    <!-- Sidebar & Dark Mode Script -->
+    <script>
         function toggleSidebar() {
             const sidebar = document.getElementById("sidebar");
             const mainContent = document.querySelector(".main-content");
             sidebar.classList.toggle("collapsed");
-            if (sidebar.classList.contains("collapsed")) {
-                mainContent.style.marginLeft = "60px";
-            } else {
-                mainContent.style.marginLeft = "220px";
-            }
+            mainContent.style.marginLeft = sidebar.classList.contains("collapsed") ? "60px" : "220px";
         }
 
-        // Auto-detect saved dark mode
+        function toggleDarkMode() {
+            document.body.classList.toggle("dark-mode");
+            localStorage.setItem("dark-mode", document.body.classList.contains("dark-mode"));
+        }
+
         window.onload = () => {
             if (localStorage.getItem("dark-mode") === "true") {
                 document.body.classList.add("dark-mode");
             }
         };
-
-        // Save toggle state
-        function toggleDarkMode() {
-            document.body.classList.toggle("dark-mode");
-            localStorage.setItem("dark-mode", document.body.classList.contains("dark-mode"));
-        }
     </script>
 
-
     <!-- Speech to Text -->
-
     <script>
         let isListening = false;
         let recognition = null;
         let finalTranscript = "";
 
         function stopDictation() {
-            if (recognition) {
-                recognition.stop();
-            }
+            if (recognition) recognition.stop();
             isListening = false;
-            document.getElementById("micButton").textContent = "🎤 Start Dictation";
+            document.getElementById("micButton").innerHTML = `<i class="fa-solid fa-microphone"></i> Start Dictation`;
             document.getElementById("micButton").classList.remove("listening");
         }
 
@@ -158,17 +349,10 @@
             const messageTextarea = document.getElementById("message");
 
             const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-            if (!SpeechRecognition) {
-                alert("Speech recognition not supported in this browser.");
-                return;
-            }
+            if (!SpeechRecognition) return alert("Speech recognition not supported.");
 
-            if (isListening) {
-                stopDictation();
-                return;
-            }
+            if (isListening) return stopDictation();
 
-            // Always create new instance to reset state
             recognition = new SpeechRecognition();
             recognition.lang = "en-IN";
             recognition.interimResults = true;
@@ -180,9 +364,7 @@
                 text = text.trim();
                 if (!text) return "";
                 text = text.charAt(0).toUpperCase() + text.slice(1);
-                if (!/[.?!]$/.test(text)) {
-                    text += ".";
-                }
+                if (!/[.?!]$/.test(text)) text += ".";
                 return text + " ";
             }
 
@@ -199,91 +381,15 @@
                 messageTextarea.value = finalTranscript + interimTranscript;
             };
 
-            function punctuateSentence(text) {
-                text = text.trim();
-                if (!text) return '';
-
-                // Capitalize first letter
-                text = text.charAt(0).toUpperCase() + text.slice(1);
-
-                // Add period if it doesn't end with . ! ?
-                if (!/[.?!]$/.test(text)) {
-                    text += '.';
-                }
-                return text;
-            }
-
-
-            recognition.onerror = function (event) {
-                console.error("Recognition error:", event.error);
-                stopDictation();
-            };
-
-            recognition.onend = function () {
-                isListening = false;
-                micButton.textContent = " Start Dictation";
-                micButton.classList.remove("listening");
-            };
+            recognition.onerror = () => stopDictation();
+            recognition.onend = () => stopDictation();
 
             recognition.start();
             isListening = true;
-            micButton.textContent = "🛑 Stop Dictation";
+            micButton.innerHTML = `<i class="fa-solid fa-stop"></i> Stop Dictation`;
             micButton.classList.add("listening");
         }
     </script>
-
-
-    <!-- <script>
-
-        // Enhance TEXT:
-        document.getElementById("enhanceBtn").addEventListener("click", async () => {
-    const body = document.getElementById("emailBody").value.trim();
-
-    if (!body) return alert("Please enter some text to enhance!");
-
-    const response = await fetch("/enhance-text", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: body })
-    });
-
-    const data = await response.json();
-
-    if (data.success) {
-        document.getElementById("emailBody").value = data.enhanced;
-    } else {
-        alert("Something went wrong. Try again.");
-    }
-});
-
-    </script> -->
-    <!-- 
-    <script>
-        document.getElementById("enhance-btn").addEventListener("click", async () => {
-            const inputBox = document.getElementById("dictation-box"); // Make sure your textarea/input has this ID
-            const originalText = inputBox.value.trim();
-
-            if (!originalText) return;
-
-            try {
-                const response = await fetch("/fix_grammar", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ text: originalText })
-                });
-
-                const data = await response.json();
-                inputBox.value = data.corrected;
-            } catch (error) {
-                console.error("Grammar enhancement failed:", error);
-                alert("Failed to enhance text. Please try again.");
-            }
-        });
-    </script> -->
-
-
-
-
 </body>
 
 </html>

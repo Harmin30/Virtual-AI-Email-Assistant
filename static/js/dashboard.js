@@ -1,4 +1,3 @@
-
 window.addEventListener('load', () => {
     loadVoicesAndSetEVA();
 });
@@ -104,36 +103,7 @@ function evaSpeak(text) {
 }
 
 
-// Load and select preferred female voice
-// function loadVoicesAndSetEVA() {
-//     return new Promise(resolve => {
-//         let voices = speechSynthesis.getVoices();
 
-//         if (voices.length) {
-//             resolve(voices);
-//         } else {
-//             speechSynthesis.onvoiceschanged = () => {
-//                 voices = speechSynthesis.getVoices();
-//                 resolve(voices);
-//             };
-//         }
-//     }).then(voices => {
-//         evaVoice =
-//             voices.find(v => v.name.toLowerCase().includes("google uk english female")) ||
-//             voices.find(v => v.name.toLowerCase().includes("zira")) ||
-//             voices.find(v => v.name.toLowerCase().includes("samantha")) ||
-//             voices.find(v => v.name.toLowerCase().includes("female")) ||
-//             voices.find(v => v.lang === "en-IN") ||
-//             voices.find(v => v.lang === "en-US") ||
-//             voices[0];
-
-//         if (evaVoice) {
-//             console.log(`✅ EVA voice set to: ${evaVoice.name} (${evaVoice.lang})`);
-//         } else {
-//             console.warn("⚠️ EVA voice not found, using default.");
-//         }
-//     });
-// }
 
 function loadVoicesAndSetEVA() {
     return new Promise(resolve => {
@@ -169,6 +139,91 @@ function loadVoicesAndSetEVA() {
             console.log(`✅ EVA voice set to: ${evaVoice.name} (${evaVoice.lang})`);
         } else {
             console.warn("⚠️ EVA voice not found, using default.");
+        }
+    });
+}
+
+function showReminderToast(message) {
+    const toast = document.createElement('div');
+    toast.className = 'reminder-toast';
+    toast.innerText = message;
+    document.body.appendChild(toast);
+
+    Object.assign(toast.style, {
+        position: 'fixed',
+        bottom: '90px',
+        right: '20px',
+        backgroundColor: '#2b2f4e',
+        color: '#fff',
+        padding: '10px 16px',
+        borderRadius: '6px',
+        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.2)',
+        zIndex: 9999,
+        opacity: 0,
+        transition: 'opacity 0.3s ease'
+    });
+
+    // Fade in
+    setTimeout(() => {
+        toast.style.opacity = 1;
+    }, 50);
+
+    // Auto-remove after 3 seconds
+    setTimeout(() => {
+        toast.style.opacity = 0;
+        setTimeout(() => toast.remove(), 300);
+    }, 3000);
+}
+
+function sendReminderTime(emailId) {
+    const datetimeInput = document.getElementById(`reminder-time-${emailId}`);
+    const reminderWrapper = document.getElementById(`reminder-input-${emailId}`);
+    const reminderTag = document.getElementById(`reminder-tag-${emailId}`);
+    const reminderTime = datetimeInput.value;
+
+    if (!reminderTime) {
+        showReminderToast("⚠️ Please select a date and time.");
+        return;
+    }
+
+    const dateObj = new Date(reminderTime);
+    const formattedTime = formatTo12Hour(dateObj);
+
+    const btn = document.getElementById(`reminder-btn-${emailId}`);
+    if (btn) {
+        btn.innerHTML = '<i class="fas fa-bell-slash"></i>';
+        btn.dataset.reminder = "true"; // 🟢 Update button state
+    }
+
+    fetch(`/set-reminder/${emailId}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: new URLSearchParams({
+            reminder_time: formattedTime
+        })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            reminderTag.style.display = 'inline';
+            reminderTag.setAttribute('data-reminder', formattedTime);
+            reminderWrapper.style.display = 'none';
+            showReminderToast("✅ Reminder set!");
+        } else {
+            showReminderToast("❌ Failed to set reminder.");
+            if (btn) {
+                btn.innerHTML = '<i class="fas fa-bell"></i> ';
+                btn.dataset.reminder = "false"; // 🔁 Revert
+            }
+        }
+    })
+    .catch(() => {
+        showReminderToast("❌ Network error setting reminder.");
+        if (btn) {
+            btn.innerHTML = '<i class="fas fa-bell"></i> ';
+            btn.dataset.reminder = "false";
         }
     });
 }
@@ -523,8 +578,9 @@ document.addEventListener('DOMContentLoaded', () => {
             const emailId = btn.dataset.emailId;
             const inputDiv = document.getElementById(`reminder-input-${emailId}`);
 
-            if (btn.textContent.includes('Set Reminder')) {
-                // Show date-time input
+            // Check if reminder is currently set by data attribute
+            if (btn.dataset.reminder === 'false') {
+                // Show date-time input for setting reminder
                 inputDiv.style.display = 'block';
             } else {
                 // Remove reminder directly
@@ -534,13 +590,15 @@ document.addEventListener('DOMContentLoaded', () => {
                         const tag = document.getElementById(`reminder-tag-${emailId}`);
                         if (data.reminder === false) {
                             tag.style.display = 'none';
-                            btn.innerHTML = '🔔 Set Reminder';
+                            btn.innerHTML = '<i class="fas fa-bell"></i>'; // Set Reminder icon
+                            btn.dataset.reminder = 'false';
                         }
                     });
             }
         });
     });
 });
+
 
 // Confirm button: send the selected reminder time
 function sendReminderTime(emailId) {
@@ -628,7 +686,81 @@ document.addEventListener('DOMContentLoaded', updateReminderUrgencyBars);
 // Optional: live update every 60 seconds
 setInterval(updateReminderUrgencyBars, 60000);
 
+document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('.reminder-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const emailId = btn.dataset.emailId;
+            const inputDiv = document.getElementById(`reminder-input-${emailId}`);
+            const tag = document.getElementById(`reminder-tag-${emailId}`);
+            
+            // Check current reminder state via dataset
+            if (btn.dataset.reminder === 'false') {
+                // Show date-time input for setting reminder
+                inputDiv.style.display = 'block';
+            } else {
+                // Remove reminder directly
+                fetch(`/toggle-reminder/${emailId}`, { method: 'POST' })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.reminder === false) {
+                            if (tag) tag.style.display = 'none';
+                            if (inputDiv) inputDiv.style.display = 'none';
+                            btn.innerHTML = '<i class="fas fa-bell"></i>'; // Set icon
+                            btn.dataset.reminder = 'false';
+                        }
+                    });
+            }
+        });
+    });
+});
 
-// Reminder notification count
+function sendReminderTime(emailId) {
+    const datetimeInput = document.getElementById(`reminder-time-${emailId}`);
+    const reminderWrapper = document.getElementById(`reminder-input-${emailId}`);
+    const reminderTag = document.getElementById(`reminder-tag-${emailId}`);
+    const reminderTime = datetimeInput.value;
+
+    if (!reminderTime) {
+        showReminderToast("⚠️ Please select a date and time.");
+        return;
+    }
+
+    const dateObj = new Date(reminderTime);
+    const formattedTime = formatTo12Hour(dateObj);
+
+    const btn = document.getElementById(`reminder-btn-${emailId}`);
+
+    fetch(`/set-reminder/${emailId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({ reminder_time: formattedTime })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            reminderTag.style.display = 'inline';
+            reminderTag.setAttribute('data-reminder', formattedTime);
+            reminderWrapper.style.display = 'none';
+            showReminderToast("✅ Reminder set!");
+            if (btn) {
+                btn.innerHTML = '<i class="fas fa-bell-slash"></i>'; // Slash icon
+                btn.dataset.reminder = 'true';
+            }
+        } else {
+            showReminderToast("❌ Failed to set reminder.");
+            if (btn) {
+                btn.innerHTML = '<i class="fas fa-bell"></i>'; 
+                btn.dataset.reminder = 'false';
+            }
+        }
+    })
+    .catch(() => {
+        showReminderToast("❌ Network error setting reminder.");
+        if (btn) {
+            btn.innerHTML = '<i class="fas fa-bell"></i>'; 
+            btn.dataset.reminder = 'false';
+        }
+    });
+}
 
 

@@ -27,6 +27,21 @@ class EmailStatus(Base):
     reminder = Column(Boolean, default=False)
    
 
+# 📅 ScheduledEmail model
+# class ScheduledEmail(Base):
+#     __tablename__ = "scheduled_emails"
+
+#     id = Column(Integer, primary_key=True)
+#     to = Column(String, nullable=False)
+#     cc = Column(String)
+#     bcc = Column(String)
+#     subject = Column(String)
+#     body = Column(Text)
+#     attachments = Column(Text)  # comma-separated filenames/paths
+#     created_at = Column(DateTime, default=datetime.utcnow)  # when scheduled
+#     scheduled_time = Column(DateTime, nullable=False)       # when to send
+#     sent = Column(Boolean, default=False)                   # has it been sent?
+
 
 # 👤 User model
 class User(Base, UserMixin):

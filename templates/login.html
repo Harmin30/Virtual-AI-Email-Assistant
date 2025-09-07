@@ -1,21 +1,72 @@
-<!DOCTYPE html>
+<!-- <!DOCTYPE html>
 <html>
+
 <head>
     <title>Login | Virtual Email Assistant</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        .error-message {
+            color: #ff4d4d;
+            margin-bottom: 10px;
+            text-align: center;
+            font-size: 14px;
+        }
+
+
+        .toggle-password {
+            margin-top: 6px;
+            font-size: 13px;
+            padding: 2px;
+            padding-right: 0%;
+            color: #007BFF;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: background-color 0.2s ease-in-out;
+        }
+
+        .toggle-password:hover {
+            background-color: #f0f0f0;
+        }
+
+        .forgot {
+            margin-top: 12px;
+            text-align: right;
+        }
+
+        .forgot a {
+            color: #007BFF;
+            /* Bootstrap blue */
+            font-size: 14px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+
+        .forgot a:hover {
+            color: #0056b3;
+            /* Darker blue on hover */
+            text-decoration: underline;
+            cursor: pointer;
+        }
+    </style>
 </head>
+
 <body class="login-body">
     <div class="card login-card">
-        <h2> Welcome back to your Virtual Email Assistant !</h2>
-        <h3> Login</h3>
+        <h2>Welcome back to your Virtual Email Assistant!</h2>
+        <h2>Login</h2>
+
+        {% if error %}
+        <div class="error-message">{{ error }}</div>
+        {% endif %}
+
         <form method="POST">
-            <input type="email" name="email" placeholder="Email address  " required>
+            <input type="email" name="email" placeholder="Email address" required>
 
             <div class="password-wrapper">
-                <input type="password" name="password" id="password" placeholder="Password  " required>
-                <span class="toggle-password" onclick="togglePassword()">👁 Show</span>
+                <input type="password" name="password" id="password" placeholder="Password" required>
+                <span class="toggle-password" onclick="togglePassword()"> Show</span>
             </div>
-
             <div class="forgot">
                 <a href="/forgot-password">Forgot Password?</a>
             </div>
@@ -33,12 +84,416 @@
             const toggle = document.querySelector(".toggle-password");
             if (passwordField.type === "password") {
                 passwordField.type = "text";
-                toggle.textContent = "🙈 Hide";
+                toggle.textContent = " Hide";
             } else {
                 passwordField.type = "password";
-                toggle.textContent = "👁 Show";
+                toggle.textContent = " Show";
             }
         }
     </script>
 </body>
+
+</html> -->
+
+
+
+
+<!-- ========================================= -->
+
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Login | Virtual Email Assistant</title>
+    <meta name="description" content="Sign in to Virtual Email Assistant — smart email tools and dashboard.">
+    <!-- If you prefer an external stylesheet, move the contents of the <style> block into static/style.css and keep the link below. -->
+    <!-- <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}"> -->
+
+    <style>
+        :root {
+            --bg-1: #2b2f4e;
+            /* primary */
+            --bg-2: #4a4f72;
+            /* secondary */
+            --card-bg: #ffffff;
+            --muted: #6b7280;
+            --accent: #2b2f4e;
+            --danger: #ff4d4d;
+            --radius: 12px;
+            --shadow: 0 10px 30px rgba(11, 14, 25, 0.18);
+
+            /* spacing scale (rem) */
+            --s-xxs: 0.25rem;
+            --s-xs: 0.5rem;
+            --s-sm: 0.75rem;
+            --s-md: 1rem;
+            --s-lg: 1.5rem;
+            --s-xl: 2rem;
+
+            font-family: "Inter", "Segoe UI", Roboto, system-ui, -apple-system, "Helvetica Neue", Arial;
+        }
+
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            height: 100%;
+            margin: 0;
+        }
+
+        body {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, var(--bg-1), var(--bg-2));
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            padding: var(--s-xl);
+        }
+
+        /* Card */
+        .login-card {
+            width: 100%;
+            max-width: 420px;
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            padding: calc(var(--s-lg) + 0.5rem) calc(var(--s-lg) + 0.5rem);
+            box-shadow: var(--shadow);
+            display: flex;
+            flex-direction: column;
+            gap: var(--s-md);
+            animation: enter 360ms cubic-bezier(.2, .9, .3, 1);
+        }
+
+        @keyframes enter {
+            from {
+                transform: translateY(8px);
+                opacity: 0
+            }
+
+            to {
+                transform: translateY(0);
+                opacity: 1
+            }
+        }
+
+        /* Header */
+        .brand {
+            display: flex;
+            gap: var(--s-sm);
+            align-items: center;
+            justify-content: center;
+        }
+
+        .logo {
+            width: 60px;
+            height: 44px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, #3a3f66, #5a5f8a);
+            display: inline-grid;
+            place-items: center;
+            color: white;
+            font-weight: 700;
+            font-size: 1rem;
+            box-shadow: 0 6px 18px rgba(10, 12, 30, 0.12);
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 1.125rem;
+            color: var(--bg-1);
+            text-align: center;
+            font-weight: 700;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: var(--muted);
+            font-size: 0.95rem;
+            margin-top: 0.25rem;
+        }
+
+        /* Form */
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: var(--s-md);
+        }
+
+        label {
+            display: block;
+            font-size: 0.825rem;
+            color: #374151;
+            margin-bottom: var(--s-xxs);
+            font-weight: 600;
+        }
+
+        input[type="email"],
+        input[type="password"],
+        input[type="text"] {
+            width: 100%;
+            padding: 0.9rem 1rem;
+            font-size: 0.95rem;
+            border-radius: 8px;
+            border: 1px solid #e6e9ef;
+            background: #fff;
+            height: 44px;
+            /* Added fixed height */
+            transition: box-shadow .18s ease, border-color .18s ease;
+        }
+
+        input::placeholder {
+            color: #9aa0ab;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: rgba(43, 47, 78, 0.9);
+            box-shadow: 0 6px 18px rgba(43, 47, 78, 0.08);
+        }
+
+        .field {
+            display: flex;
+            flex-direction: column;
+            gap: var(--s-xs);
+        }
+
+        .password-row {
+            position: relative;
+        }
+
+        .toggle-password {
+            position: absolute;
+            right: 12px;
+            /* Slightly increased for breathing room */
+            top: 68%;
+            transform: translateY(-50%);
+            background: transparent;
+            border: none;
+            font-weight: 600;
+            color: var(--accent);
+            padding: 4px 10px;
+            /* Balanced padding for click comfort */
+            margin: 0;
+            /* Prevent any default margin shift */
+            border-radius: 6px;
+            cursor: pointer;
+            line-height: 1;
+            /* Keeps icon/text centered vertically */
+            display: flex;
+            /* Ensures perfect vertical centering */
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s ease;
+        }
+
+        .toggle-password:hover {
+            background: rgba(0, 0, 0, 0.05);
+            /* Subtle hover feedback */
+        }
+
+        .toggle-password:focus {
+            box-shadow: 0 0 0 3px rgba(43, 47, 78, 0.08);
+        }
+
+        .row-between {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: var(--s-md);
+        }
+
+        .remember {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+            color: #475569;
+        }
+
+        .remember input {
+            width: 16px;
+            height: 16px;
+        }
+
+        .forgot a {
+            color: var(--accent);
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .forgot a:hover {
+            text-decoration: underline;
+        }
+
+        button[type="submit"] {
+            width: 100%;
+            padding: 0.95rem 1rem;
+            border-radius: 10px;
+            border: 0;
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 1rem;
+            background: linear-gradient(180deg, var(--accent), #22243a);
+            color: #fff;
+            box-shadow: 0 8px 22px rgba(11, 14, 25, 0.12);
+            transition: transform .12s ease, box-shadow .12s ease, opacity .12s ease;
+        }
+
+        button[type="submit"]:active {
+            transform: translateY(1px);
+        }
+
+        button[type="submit"]:disabled {
+            opacity: .6;
+            cursor: not-allowed;
+        }
+
+        button[type="submit"]:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 26px rgba(11, 14, 25, 0.18);
+            opacity: 0.95;
+        }
+
+
+        .error-message {
+            color: var(--danger);
+            background: rgba(255, 77, 77, 0.06);
+            padding: 0.6rem 0.9rem;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            text-align: center;
+        }
+
+        .footer {
+            text-align: center;
+            color: var(--muted);
+            font-size: 0.92rem;
+        }
+
+        .footer a {
+            color: var(--accent);
+            font-weight: 700;
+            text-decoration: none;
+        }
+
+        /* small screens */
+        @media (max-width:420px) {
+            .login-card {
+                padding: 1rem;
+                border-radius: 10px;
+            }
+
+            h1 {
+                font-size: 1rem;
+            }
+
+            .logo {
+                width: 40px;
+                height: 40px;
+            }
+        }
+
+        #login-heading1 {
+            margin-bottom: 1.2rem;
+            font-weight: 900;
+            font-size: 1.2rem;
+
+        }
+
+        #login-heading2 {
+            /* margin-bottom: 1rem; */
+            font-weight: bolder;
+            font-size: 1.2rem;
+
+        }
+    </style>
+</head>
+
+<body>
+    <main class="login-card" role="main" aria-labelledby="login-heading">
+
+        <div class="brand">
+            <div class="logo" aria-hidden="true">VEXA</div>
+        </div>
+
+        <header>
+            <!-- <h1 id="login-heading1">Welcome</h1> -->
+            <h1 id="login-heading2">Welcome Back! Sign in to continue</h1>
+            <p class="subtitle">Your AI-powered email desk</p>
+
+            <!-- <p class="subtitle">Access your Virtual Email Assistant dashboard</p> -->
+        </header>
+
+        <!-- Server-side errors go here -->
+        {% if error %}
+        <div class="error-message" role="alert" aria-live="polite">{{ error }}</div>
+        {% endif %}
+
+        <form method="POST" aria-label="Login form" autocomplete="on">
+
+            <div class="field">
+                <label for="email">Email address</label>
+                <input id="email" name="email" type="email" placeholder="you@company.com" autocomplete="username"
+                    required autofocus>
+            </div>
+
+            <div class="field password-row">
+                <label for="password">Password</label>
+                <input id="password" name="password" type="password" placeholder="Enter your password"
+                    autocomplete="current-password" required aria-describedby="pwd-help">
+                <button type="button" class="toggle-password" aria-pressed="false" aria-label="Show password"
+                    onclick="togglePassword(this)">Show</button>
+                <div id="pwd-help" style="display:none">Toggle password visibility</div>
+            </div>
+
+            <div class="row-between">
+                <label class="remember"><input type="checkbox" name="remember" aria-label="Remember me"> Remember
+                    me</label>
+                <div class="forgot"><a href="/forgot-password">Forgot password?</a></div>
+            </div>
+
+            <button type="submit">Login</button>
+        </form>
+
+        <div class="footer">
+            <p>Don't have an account? <a href="/register">Register</a></p>
+        </div>
+    </main>
+
+    <script>
+        function togglePassword(btn) {
+            const pwd = document.getElementById('password');
+            const isHidden = btn.getAttribute('aria-pressed') === 'true';
+            if (isHidden) {
+                // currently visible -> hide
+                pwd.type = 'password';
+                btn.textContent = 'Show';
+                btn.setAttribute('aria-pressed', 'false');
+                btn.setAttribute('aria-label', 'Show password');
+            } else {
+                pwd.type = 'text';
+                btn.textContent = 'Hide';
+                btn.setAttribute('aria-pressed', 'true');
+                btn.setAttribute('aria-label', 'Hide password');
+            }
+            // move focus back to the button to avoid losing keyboard context
+            btn.focus();
+        }
+
+        // Prevent accidental form resubmission on refresh (optional UX tweak)
+        if (window.history.replaceState) {
+            window.history.replaceState(null, null, window.location.href);
+        }
+    </script>
+</body>
+
 </html>

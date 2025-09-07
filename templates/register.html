@@ -1,21 +1,43 @@
-<!DOCTYPE html>
+<!-- <!DOCTYPE html>
 <html>
+
 <head>
     <title>Register | Virtual Email Assistant</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        .toggle-password {
+            margin-top: 6px;
+            font-size: 13px;
+            padding: 2px;
+            padding-right: 0%;
+            color: #007BFF;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: background-color 0.2s ease-in-out;
+        }
+
+        .toggle-password:hover {
+            background-color: #f0f0f0;
+        }
+    </style>
 </head>
+
 <body class="register-body">
     <div class="card register-card">
-        <h2> Register</h2>
+        <h2>Register</h2>
         <form method="POST">
-            <input type="text" name="name" placeholder="Full Name   " required>
-            <input type="email" name="email" placeholder="Email Address (for login)  " required>
-            <input type="password" name="password" placeholder="Create Password  " required>
+            <input type="text" name="name" placeholder="Full Name" required>
+            <input type="email" name="email" placeholder="Email Address (for login)" required>
+
+            <div class="password-wrapper">
+                <input type="password" name="password" id="password" placeholder="Create Password" required>
+                <span class="toggle-password" onclick="togglePassword()"> Show</span>
+            </div>
 
             <select name="role" required>
                 <option value="">Select Role</option>
-                <option value="user">User  👤</option>
-                <option value="admin">Admin  👑</option>
+                <option value="user">User </option>
+                <option value="admin">Admin </option>
             </select>
 
             <button type="submit">Create Account</button>
@@ -24,5 +46,352 @@
             Already have an account? <a href="/login">Login</a>
         </div>
     </div>
+
+    <script>
+        function togglePassword() {
+            const passwordField = document.getElementById("password");
+            const toggle = document.querySelector(".toggle-password");
+            if (passwordField.type === "password") {
+                passwordField.type = "text";
+                toggle.textContent = " Hide";
+            } else {
+                passwordField.type = "password";
+                toggle.textContent = " Show";
+            }
+        }
+    </script>
 </body>
+
+</html> -->
+
+
+
+<!-- =================== -->
+
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Register | Virtual Email Assistant</title>
+    <meta name="description" content="Create your Virtual Email Assistant account.">
+
+    <style>
+        :root {
+            --bg-1: #2b2f4e;
+            --bg-2: #4a4f72;
+            --card-bg: #ffffff;
+            --muted: #6b7280;
+            --accent: #2b2f4e;
+            --danger: #ff4d4d;
+            --radius: 12px;
+            --shadow: 0 10px 30px rgba(11, 14, 25, 0.18);
+
+            --s-xxs: 0.25rem;
+            --s-xs: 0.5rem;
+            --s-sm: 0.75rem;
+            --s-md: 1rem;
+            --s-lg: 1.5rem;
+            --s-xl: 2rem;
+
+            font-family: "Inter", "Segoe UI", Roboto, system-ui, -apple-system, "Helvetica Neue", Arial;
+        }
+
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            height: 100%;
+            margin: 0;
+        }
+
+        body {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, var(--bg-1), var(--bg-2));
+            padding: var(--s-xl);
+        }
+
+        .register-card {
+            width: 100%;
+            max-width: 420px;
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            padding: calc(var(--s-lg) + 0.5rem);
+            box-shadow: var(--shadow);
+            display: flex;
+            flex-direction: column;
+            gap: var(--s-md);
+            animation: enter 360ms cubic-bezier(.2, .9, .3, 1);
+        }
+
+        @keyframes enter {
+            from {
+                transform: translateY(8px);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .brand {
+            display: flex;
+            gap: var(--s-sm);
+            align-items: center;
+            justify-content: center;
+        }
+
+        .logo {
+            width: 60px;
+            height: 44px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, #3a3f66, #5a5f8a);
+            display: inline-grid;
+            place-items: center;
+            color: white;
+            font-weight: 700;
+            font-size: 1rem;
+            box-shadow: 0 6px 18px rgba(10, 12, 30, 0.12);
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 1.125rem;
+            color: var(--bg-1);
+            text-align: center;
+            font-weight: 700;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: var(--muted);
+            font-size: 0.95rem;
+            margin-top: 0.25rem;
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: var(--s-md);
+        }
+
+        label {
+            font-size: 0.825rem;
+            color: #374151;
+            margin-bottom: var(--s-xxs);
+            font-weight: 600;
+        }
+
+        input[type="text"],
+        input[type="email"],
+        input[type="password"],
+        input[type="password"]:focus,
+        input[type="text"]:focus {
+            width: 100%;
+            padding: 0.9rem 1rem;
+            font-size: 0.95rem;
+            border-radius: 8px;
+            border: 1px solid #e6e9ef;
+            background: #fff;
+            height: 44px;
+            transition: box-shadow .18s ease, border-color .18s ease;
+        }
+
+        select {
+            width: 100%;
+            padding: 0.9rem 1rem;
+            font-size: 0.95rem;
+            border-radius: 8px;
+            border: 1px solid #e6e9ef;
+            background: #fff;
+            height: 44px;
+            transition: box-shadow .18s ease, border-color .18s ease;
+        }
+
+        input:focus,
+        select:focus {
+            outline: none;
+            border-color: rgba(43, 47, 78, 0.9);
+            box-shadow: 0 6px 18px rgba(43, 47, 78, 0.08);
+        }
+
+        .password-row {
+            position: relative;
+        }
+
+        .toggle-password {
+            position: absolute;
+            right: 12px;
+            top: 67%;
+            transform: translateY(-50%);
+            background: transparent;
+            border: none;
+            font-weight: 600;
+            color: var(--accent);
+            padding: 4px 10px;
+            margin: 0;
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s ease;
+        }
+
+        .toggle-password:hover {
+            background: rgba(0, 0, 0, 0.05);
+        }
+
+        button[type="submit"] {
+            width: 100%;
+            padding: 0.95rem 1rem;
+            border-radius: 10px;
+            border: 0;
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 1rem;
+            background: linear-gradient(180deg, var(--accent), #22243a);
+            color: #fff;
+            box-shadow: 0 8px 22px rgba(11, 14, 25, 0.12);
+            transition: transform .12s ease, box-shadow .12s ease, opacity .12s ease;
+        }
+
+        button[type="submit"]:active {
+            transform: translateY(1px);
+        }
+
+        button[type="submit"]:disabled {
+            opacity: .6;
+            cursor: not-allowed;
+        }
+
+        button[type="submit"]:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 26px rgba(11, 14, 25, 0.18);
+            opacity: 0.95;
+        }
+
+        .footer {
+            text-align: center;
+            color: var(--muted);
+            font-size: 0.92rem;
+        }
+
+        .footer a {
+            color: var(--accent);
+            font-weight: 700;
+            text-decoration: none;
+        }
+
+        #role {
+            font-size: .8rem;
+        }
+
+        .field {
+            margin-bottom: 5px;
+            /* space between fields */
+        }
+
+        .field label {
+            display: block;
+            margin-bottom: 10px;
+            /* gap between label and input */
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        .field input,
+        .field select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+
+        @media (max-width:420px) {
+            .register-card {
+                padding: 1rem;
+                border-radius: 10px;
+            }
+
+            h1 {
+                font-size: 1rem;
+            }
+
+            .logo {
+                width: 40px;
+                height: 40px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <main class="register-card" role="main" aria-labelledby="register-heading">
+        <div class="brand">
+            <div class="logo" aria-hidden="true">VEXA</div>
+        </div>
+        <header>
+            <h1 id="register-heading">Create your account</h1>
+            <!-- <p class="subtitle">Your AI-powered email desk awaits</p> -->
+             <p class="subtitle">Experience smarter email, powered by AI</p>
+            <!-- <p class="subtitle">Join Virtual Email Assistant today</p> -->
+        </header>
+
+        <form method="POST" autocomplete="on">
+            <div class="field">
+                <label for="name">Full Name</label>
+                <input id="name" name="name" type="text" placeholder="John Doe" required>
+            </div>
+
+            <div class="field">
+                <label for="email">Email Address</label>
+                <input id="email" name="email" type="email" placeholder="you@company.com" required>
+            </div>
+
+            <div class="field password-row">
+                <label for="password">Create Password</label>
+                <input id="password" name="password" type="password" placeholder="Enter your password" required>
+                <button type="button" class="toggle-password" onclick="togglePassword(this)">Show</button>
+            </div>
+
+            <div class="field">
+                <label for="role">Select Role</label>
+                <select id="role" name="role" required>
+                    <option value="">Choose...</option>
+                    <option value="user">User</option>
+                    <option value="admin">Admin</option>
+                </select>
+            </div>
+
+            <button type="submit">Create Account</button>
+        </form>
+
+        <div class="footer">
+            Already have an account? <a href="/login">Login</a>
+        </div>
+    </main>
+
+    <script>
+        function togglePassword(btn) {
+            const pwd = document.getElementById('password');
+            const isHidden = pwd.type === 'text';
+            pwd.type = isHidden ? 'password' : 'text';
+            btn.textContent = isHidden ? 'Show' : 'Hide';
+        }
+    </script>
+</body>
+
 </html>

@@ -298,6 +298,14 @@
       <i class="fas fa-bell"></i><span>Reminders</span>
     </a>
 
+    </a>
+    {% if current_user.is_authenticated and current_user.is_admin %}
+    <a href="{{ url_for('user_management') }}" class="sidebar-btn">
+      <i class="fas fa-users-cog"></i><span>User Management</span>
+    </a>
+    {% endif %}
+
+
     <a href="{{ url_for('logout') }}" class="sidebar-btn logout">
       <i class="fas fa-sign-out-alt"></i><span>Logout</span>
     </a>
@@ -327,36 +335,43 @@
     <div class="reminders-wrapper">
       {% if reminders %}
       <table class="reminders-table">
-        <thead>
-          <tr>
-            <th>Subject</th>
-            <th>Description</th>
-            <th>Scheduled For</th>
-            <th>Status</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for reminder in reminders %}
-          <tr class="{{ get_urgency_class(reminder.timestamp) }}" class="reminder-mail">
-            <td>{{ reminder.subject }}</td>
-            <td>{{ reminder.summary or 'No description' }}</td>
-            <td>{{ reminder.timestamp.strftime('%I:%M %p, %d %b %Y') }}</td>
+  <thead>
+    <tr>
+      <th>No.</th>   <!-- ✅ New column for numbering -->
+      <th>Subject</th>
+      <th>Description</th>
+      <th>From</th>
+      <th>Scheduled For</th>
+      <th>Status</th>
+      <th>Actions</th>
+    </tr>
+  </thead>
 
-            <td>
-              <span class="badge {{ 'read' if reminder.read else 'pending' }}">
-                {{ 'Read' if reminder.read else 'Pending' }}
-              </span>
-            </td>
-            <td>
-              <a href="{{ url_for('delete_reminder', id=reminder.id) }}" class="delete-btn-1" title="Delete Reminder">
-                <i class="fas fa-trash-alt"></i>
-              </a>
-            </td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
+  <tbody>
+    {% for reminder in reminders %}
+    <tr class="{{ get_urgency_class(reminder.timestamp) }}" class="reminder-mail">
+      <td>{{ loop.index }}</td> <!-- ✅ Auto numbering (1,2,3...) -->
+      <td>{{ reminder.subject }}</td>
+      <td>{{ reminder.summary or 'No description' }}</td>
+      <td title="{{ reminder.sender }}">
+        {{ reminder.sender.split('<')[0].strip() if '<' in reminder.sender else reminder.sender }}
+      </td>
+      <td>{{ reminder.timestamp.strftime('%I:%M %p, %d %b %Y') }}</td>
+      <td>
+        <span class="badge {{ 'read' if reminder.read else 'pending' }}">
+          {{ 'Read' if reminder.read else 'Pending' }}
+        </span>
+      </td>
+      <td>
+        <a href="{{ url_for('delete_reminder', id=reminder.id) }}" class="delete-btn-1" title="Delete Reminder">
+          <i class="fas fa-trash-alt"></i>
+        </a>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
       {% else %}
       <p>No reminders found.</p>
       {% endif %}

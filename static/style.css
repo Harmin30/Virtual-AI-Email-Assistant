@@ -73,15 +73,19 @@ textarea {
 button {
   margin-top: 6px;
   padding: 6px 12px;
-  background-color: #2980b9;
+  /* background-color: #2b2f4e; */
+  background-color: #404257;
   color: white;
   border: none;
   border-radius: 4px;
   cursor: pointer;
+  /* background: #e8eaf6;
+  color: var(--primary); */
 }
 
 button:hover {
-  background-color: #216a94;
+  background-color: #474a6b;
+  /* background: #d0d3f1; */
 }
 
 body.dark-mode .table-container {
@@ -155,7 +159,7 @@ td {
 
 th {
   background: #3498db;
-  color: white;
+
 }
 
 tr:hover {
@@ -194,10 +198,53 @@ tr:hover {
   margin-top: 1rem;
 }
 
-.user-info {
+/* .user-info {
   font-size: 14px;
   color: #847e7e !important;
+} */
+
+.user-info {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  background-color: #2b2f4e;
+  color: #e0e0ff;
+  font-weight: 600;
+  font-size: 0.9rem;
+  border-radius: 24px;
+  box-shadow: 0 4px 12px rgba(43, 47, 78, 0.6);
+  user-select: none;
+  cursor: default;
+  max-width: 280px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
 }
+
+body.dark-mode .user-info {
+  background-color: #1f2238;
+  color: #c0c3ff;
+  box-shadow: 0 4px 14px rgba(43, 47, 78, 0.8);
+}
+
+.user-info i.fas.fa-user-circle {
+  font-size: 1rem;
+  color: #8a8dff;
+  transition: color 0.3s ease;
+}
+
+.user-info:hover {
+  background-color: #3c4168;
+  box-shadow: 0 6px 18px rgba(43, 47, 78, 0.85);
+}
+
+.user-info:hover i.fas.fa-user-circle {
+  color: #b0b3ff;
+}
+
+
 
 .top-bar {
   display: flex;
@@ -434,7 +481,8 @@ tr:hover {
 }
 
 .sidebar ul li a:hover {
-  background-color: #f0f0f0;
+  /* background-color: #f0f0f0; */
+  
 }
 
 .sidebar ul li a i {
@@ -457,7 +505,7 @@ tr:hover {
 
 /* === Toggle Button at Bottom === */
 .sidebar-toggle {
-  margin-top: auto; 
+  margin-top: auto;
   /* Push to bottom */
   display: flex;
   justify-content: flex-end;
@@ -472,7 +520,7 @@ tr:hover {
 
 .sidebar.collapsed .sidebar-toggle {
   justify-content: center;
-} 
+}
 
 .sidebar-toggle:hover {
   background: #f0f0f0;
@@ -517,7 +565,7 @@ tr:hover {
   background-color: #c0392b;
 }
 
-.toggle-btn {
+/* .toggle-btn {
   position: absolute;
   top: 10px;
   right: 28px;
@@ -529,7 +577,41 @@ tr:hover {
   border-radius: 6px;
   cursor: pointer;
   font-size: 10px;
+} */
+
+
+
+.toggle-btn {
+  position: fixed;
+  top: 15px;
+  right: 15px;
+  width: 40px;
+  height: 40px;
+  border: none;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #2b2f4e);
+  color: #fff;
+  font-size: 1.1rem;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  z-index: 1000;
 }
+
+.toggle-btn:hover {
+  background: linear-gradient(135deg, #2b2f4e);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+}
+
+.toggle-btn:active {
+  transform: translateY(0px);
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.15);
+}
+
 
 /* ==========================
    🔍 SEARCH & INLINE FORMS
@@ -801,8 +883,8 @@ tr:hover {
 
 .sidebar .toggle-sidebar {
   display: flex;
-  justify-content: center;
-  padding: 10px;
+  justify-content: left;
+  padding: 0px 0px 15px 23px;
   cursor: pointer;
 }
 
@@ -1089,7 +1171,7 @@ body.dark-mode .close-btn:hover {
 
 
 .eva-mic-btn:hover {
-  background-color: #3658a0;
+  background-color: #474a6b;
 }
 
 
@@ -1259,7 +1341,7 @@ body.dark-mode .close-btn:hover {
   bottom: 24px;
   right: 80px;
   padding: 12px 20px;
-  background-color: #2c3e50;
+  background-color: #404257;
   color: white;
   border: none;
   border-radius: 30px;
@@ -1342,7 +1424,7 @@ body.dark-mode .close-btn:hover {
   position: fixed;
   bottom: 20px;
   right: 20px;
-  background-color: #2b2f4e;
+  background-color: #404257;
   color: white;
   border-radius: 50%;
   width: 48px;
@@ -1357,7 +1439,7 @@ body.dark-mode .close-btn:hover {
 }
 
 .floating-compose:hover {
-  background-color: #0056b3;
+  background-color: #474a6b;
   transform: scale(1.08);
 }
 
@@ -1379,7 +1461,7 @@ body.dark-mode .close-btn:hover {
 }
 
 #refreshBtn:hover {
-  background-color: #2980b9;
+  background-color: #474a6b;
   /* transform: rotate(90deg); */
 }
 
@@ -1458,5 +1540,18 @@ body.dark-mode .close-btn:hover {
   cursor: pointer;
 }
 
+/* Notification count */
 
-
+.notification-badge {
+  background-color: red;
+  color: white;
+  font-size: 0.75rem;
+  padding: 2px 6px;
+  border-radius: 50%;
+  margin-left: 6px;
+  display: none;
+  /* hidden by default */
+  font-weight: bold;
+  position: relative;
+  top: -2px;
+}

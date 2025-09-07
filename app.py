@@ -20,35 +20,18 @@ from models import EmailStatus, User, SentEmail
 from flask_sqlalchemy import SQLAlchemy
 from flask import Flask
 from datetime import datetime
-
-
-
-
-
+from flask_login import LoginManager
 from flask import send_from_directory
 # from eva_voice import speak, listen
-
 import threading
 import time
 from datetime import datetime
-# from email_model import get_due_reminders, mark_reminder_sent
-# from flask import jsonify
-
 import dateparser
-
-# from flask_sqlalchemy import SQLAlchemy
-# from flask_migrate import Migrate
-
 import sqlite3
 import datetime
-
-
-
 # Register adapter and converter for datetime
 sqlite3.register_adapter(datetime.datetime, lambda val: val.isoformat())
 sqlite3.register_converter("timestamp", lambda val: datetime.datetime.fromisoformat(val.decode("utf-8")))
-
-
 import sqlite3
 
 DATABASE = 'emails.db'
@@ -60,7 +43,7 @@ def get_db_connection():
 
 
 from flask import request, jsonify
-# from happytransformer import HappyTextToText
+
 
 
 # ------------------ Load Configuration ------------------
@@ -73,15 +56,13 @@ SECRET_KEY = os.getenv('SECRET_KEY')
 # ------------------ Flask App Setup ------------------
 app = Flask(__name__)
 app.secret_key = SECRET_KEY
+# Add these config lines for Remember Me cookie duration and security:
+from datetime import timedelta
 
-# ✅ Add this config line before initializing SQLAlchemy
-# app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///emails.db'
-# app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-
-# ✅ Now initialize db
-# db = SQLAlchemy(app)
-# migrate = Migrate(app, db)
-
+app.config['REMEMBER_COOKIE_DURATION'] = timedelta(days=7)    # Remember me for 7 days (customize as needed)
+app.config['REMEMBER_COOKIE_HTTPONLY'] = True                 # Protect cookie from JS access
+app.config['REMEMBER_COOKIE_SECURE'] = False                   # Set True in production with HTTPS!
+app.config['SESSION_COOKIE_SECURE'] = False                    # Same here: True in production with HTTPS
 serializer = URLSafeTimedSerializer(app.secret_key)
 
 
@@ -95,45 +76,6 @@ model = T5ForConditionalGeneration.from_pretrained("google/flan-t5-small")
 tokenizer = T5Tokenizer.from_pretrained("google/flan-t5-small")
 summarizer = pipeline("summarization", model="sshleifer/distilbart-cnn-12-6")
 
-
-
-# def init_reminders_table():
-#     conn = get_db_connection()
-#     cursor = conn.cursor()
-    
-#     # Create the table if it doesn't exist
-#     cursor.execute("""
-#         CREATE TABLE IF NOT EXISTS reminders (
-#             id INTEGER PRIMARY KEY AUTOINCREMENT,
-#             subject TEXT NOT NULL,
-#             reminder_time TEXT NOT NULL
-#         )
-#     """)
-    
-#     # Optional: remove 'full_datetime' if it exists (cleanup if you were testing earlier)
-#     try:
-#         cursor.execute("PRAGMA table_info(reminders)")
-#         columns = [col[1] for col in cursor.fetchall()]
-#         if 'full_datetime' in columns:
-#             # Backup old data
-#             cursor.execute("ALTER TABLE reminders RENAME TO reminders_old")
-#             cursor.execute("""
-#                 CREATE TABLE reminders (
-#                     id INTEGER PRIMARY KEY AUTOINCREMENT,
-#                     subject TEXT NOT NULL,
-#                     reminder_time TEXT NOT NULL
-#                 )
-#             """)
-#             cursor.execute("""
-#                 INSERT INTO reminders (id, subject, reminder_time)
-#                 SELECT id, subject, reminder_time FROM reminders_old
-#             """)
-#             cursor.execute("DROP TABLE reminders_old")
-#     except Exception as e:
-#         print("Error during full_datetime cleanup:", e)
-
-#     conn.commit()
-#     conn.close()
 
 
 # ------------------ Helper Functions ------------------
@@ -164,130 +106,22 @@ def format_datetime(value):
     except:
         return value
 
-@login_manager.user_loader
-def load_user(user_id):
-    session = Session()
-    user = session.get(User, int(user_id))
-    session.close()
-    return user
+from flask_login import login_required, current_user
+
+@app.route('/test-admin')
+@login_required
+def test_admin():
+    is_admin = getattr(current_user, 'is_admin', None)
+    return (
+        f"<p>User ID: {current_user.id}</p>"
+        f"<p>Email: {current_user.email}</p>"
+        f"<p>Is Admin (raw): {is_admin}</p>"
+        f"<p>Is Admin (type): {type(is_admin)}</p>"
+        f"<p>Is Admin (bool): {bool(is_admin)}</p>"
+    )
+
 
 # ------------------ Auth Routes ------------------
- 
-# EVA Voice : 
-
-# @app.route('/eva-listen')
-# def eva_listen():
-#     query = listen()
-#     if query:
-#         speak(f"You said: {query}")
-#     return jsonify({"message": query or "Sorry, I didn’t catch that."})
-
-# @app.route('/eva-listen')
-# def eva_listen():
-#     import random
-#     from datetime import datetime
-
-#     query = listen()
-#     if not query:
-#         speak("Sorry, I didn’t catch that.")
-#         return jsonify({"message": "Sorry, I didn’t catch that."})
-
-#     user_input = query.lower()
-
-#     # 🎯 EVA Command Parser
-#     def parse_command(text):
-#         if "unread" in text:
-#             return {"action": "unread"}
-#         elif "read" in text and "latest" in text:
-#             return {"action": "read_latest"}
-#         elif "summarize" in text or "summary" in text:
-#             return {"action": "summarize"}
-#         elif "reply" in text or "respond" in text:
-#             return {"action": "reply"}
-#         elif "logout" in text or "log out" in text:
-#             return {"action": "logout"}
-#         elif "compose" in text or "write email" in text:
-#             return {"action": "compose"}
-#         elif "sent mail" in text or "sent" in text:
-#             return {"action": "sent"}
-#         elif "archive" in text:
-#             return {"action": "archive"}
-#         elif "inbox" in text:
-#             return {"action": "inbox"}
-#         elif "smart reply" in text:
-#             return {"action": "smart_reply"}
-#         elif "priority" in text:
-#             return {"action": "priority"}
-#         elif "reset password" in text:
-#             return {"action": "reset_password"}
-#         elif "settings" in text:
-#             return {"action": "settings"}
-#         elif "eva" in text or "help" in text:
-#             return {"action": "help"}
-#         else:
-#             return {"action": "chat"}
-
-#     # 💬 EVA Replies
-#     def generate_reply(text, action):
-#         if action["action"] == "chat":
-#             if "hi" in text or "hello" in text:
-#                 return get_greeting() + " I'm EVA, your smart assistant. 😊"
-#             elif "how are you" in text:
-#                 return random.choice([
-#                     "I'm doing great! How can I assist you?",
-#                     "Always ready to help you!",
-#                     "Feeling smart and focused today. 😎"
-#                 ])
-#             elif "thank" in text:
-#                 return "You're very welcome! 💙"
-#             elif "what can you do" in text:
-#                 return (
-#                     "I can read, summarize, reply, archive emails, and guide you with voice commands. "
-#                     "Try saying 'show unread emails' or 'compose a new email'."
-#                 )
-#             else:
-#                 return "I'm listening. Try something like 'open inbox' or 'show sent emails'."
-
-#         # 🔁 Route-specific reply
-#         return {
-#             "inbox": "Opening your inbox.",
-#             "unread": "Showing your unread emails.",
-#             "read_latest": "Reading your latest email now.",
-#             "summarize": "Summarizing recent emails.",
-#             "reply": "Ready to help you reply. What would you like to say?",
-#             "logout": "Logging you out now.",
-#             "compose": "Opening the compose email screen.",
-#             "sent": "Taking you to your sent mails.",
-#             "archive": "Opening the archive folder.",
-#             "smart_reply": "Opening smart reply options.",
-#             "priority": "Showing your priority emails.",
-#             "reset_password": "Opening password reset page.",
-#             "settings": "Opening your settings page.",
-#             "help": "I'm EVA. You can ask me to read emails, compose, summarize, or logout. Just say a command!"
-#         }.get(action["action"], "Sorry, I didn’t understand that.")
-
-#     # ⏰ Greeting by time
-#     def get_greeting():
-#         hour = datetime.now().hour
-#         if hour < 12:
-#             return "Good morning! ☀️"
-#         elif hour < 18:
-#             return "Good afternoon! 🌤️"
-#         else:
-#             return "Good evening! 🌙"
-
-#     action = parse_command(user_input)
-#     reply = generate_reply(user_input, action)
-#     speak(reply)
-
-#     return jsonify({
-#         "message": query,
-#         "reply": reply,
-#         "action": action["action"]
-#     })
-
-
-#  =============================
 
 from flask import request, jsonify
 from datetime import datetime
@@ -403,29 +237,6 @@ def eva_listen():
         "redirect": action["redirect"]
     })
 
-
-
-# @app.route('/dashboard')
-# def dashboard_redirect():
-#     return redirect(url_for('dashboard'))
-
-
-
-# Load model only once
-# happy_tt = HappyTextToText("T5", "vennify/t5-base-grammar-correction")
-
-# @app.route('/fix_grammar', methods=['POST'])
-# def fix_grammar():
-#     data = request.get_json()
-#     raw_text = data.get("text", "")
-
-#     if not raw_text.strip():
-#         return jsonify({"corrected": ""})
-
-#     result = happy_tt.generate_text(f"grammar: {raw_text}")
-#     return jsonify({"corrected": result.text})
-
-
 #  Compose Email :
 
 from models import SentEmail, Session
@@ -522,6 +333,11 @@ def compose():
     return render_template('compose.html',active_page='compose')
 
 
+from cryptography.fernet import Fernet
+import os
+
+fernet = Fernet(os.getenv("FERNET_KEY"))
+
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
@@ -529,28 +345,100 @@ def register():
         password = request.form['password']
         role = request.form.get('role', 'user')
         hashed_pw = generate_password_hash(password)
+
+        # Load shared Gmail credentials from .env
+        shared_email = os.getenv("EMAIL")
+        shared_password = os.getenv("APP_PASSWORD")
+        encrypted_shared_pw = fernet.encrypt(shared_password.encode()).decode()
+
         session = Session()
+
         if session.query(User).filter_by(email=email).first():
             session.close()
             return "❌ Email already registered", 409
-        user = User(email=email, password=hashed_pw, role=role)
+
+        user = User(
+            email=email,
+            password=hashed_pw,
+            email_address=shared_email,
+            imap_password_encrypted=encrypted_shared_pw,
+            role=role,
+            is_admin=(role.lower() == "admin")
+        )
+
         session.add(user)
         session.commit()
         session.close()
+
         return redirect('/login')
+
     return render_template('register.html')
+
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
+    error = None
     if request.method == 'POST':
-        session = Session()
-        user = session.query(User).filter_by(email=request.form['email']).first()
-        session.close()
-        if user and check_password_hash(user.password, request.form['password']):
-            login_user(user)
-            return redirect('/')
-        return "❌ Invalid credentials", 401
-    return render_template('login.html')
+        email = request.form['email']
+        password = request.form['password']
+        remember = 'remember' in request.form  # ✅ match HTML name
+
+        session_db = Session()
+        user = session_db.query(User).filter_by(email=email).first()
+
+        if user and user.check_password(password):
+            login_user(user, remember=remember)  # ✅ remember works now
+            session_db.close()
+            return redirect(url_for('dashboard'))
+        else:
+            error = "Invalid email or password"
+            session_db.close()
+
+    return render_template('login.html', error=error)
+
+
+
+# from flask import request, redirect, url_for, render_template, make_response
+# from flask_login import login_user
+# from datetime import timedelta
+
+# @app.route('/login', methods=['GET', 'POST'])
+# def login():
+#     error = None
+#     saved_email = request.cookies.get('saved_email')  # ⬅️ fetch saved email from cookie
+
+#     if request.method == 'POST':
+#         email = request.form['email']
+#         password = request.form['password']
+#         remember = 'remember' in request.form  # ✅ match your HTML checkbox name
+
+#         session_db = Session()
+#         user = session_db.query(User).filter_by(email=email).first()
+
+#         if user and user.check_password(password):
+#             login_user(user, remember=remember)
+
+#             # ✅ prepare response with cookie
+#             resp = make_response(redirect(url_for('dashboard')))
+#             if remember:
+#                 resp.set_cookie(
+#                     'saved_email',
+#                     email,
+#                     max_age=60*60*24*30,  # 30 days
+#                     httponly=False,       # allow HTML to read it (safe since only email)
+#                     secure=False          # set True if using HTTPS
+#                 )
+#             else:
+#                 resp.delete_cookie('saved_email')
+
+#             session_db.close()
+#             return resp
+#         else:
+#             error = "Invalid email or password"
+#             session_db.close()
+
+#     # ⬅️ pass saved email into template
+    # return render_template('login.html', error=error, saved_email=saved_email)
 
 @app.route('/logout')
 @login_required
@@ -558,8 +446,49 @@ def logout():
     logout_user()
     return redirect('/login')
 
+# @app.route('/forgot-password', methods=['GET', 'POST'])
+# def forgot_password():
+#     if request.method == 'POST':
+#         email = request.form['email']
+#         session = Session()
+#         user = session.query(User).filter_by(email=email).first()
+#         session.close()
+#         if user:
+#             token = serializer.dumps(email, salt='email-reset')
+#             reset_link = url_for('reset_password', token=token, _external=True)
+#             send_reset_email(email, reset_link)
+#             return "✅ Reset link sent to your email."
+#         return "❌ Email not found."
+#     return render_template('forgot_password.html')
+
+# @app.route('/reset-password/<token>', methods=['GET', 'POST'])
+# def reset_password(token):
+#     try:
+#         email = serializer.loads(token, salt='email-reset', max_age=3600)
+#     except SignatureExpired:
+#         return "❌ The reset link has expired."
+#     except BadSignature:
+#         return "❌ Invalid or tampered link."
+
+#     if request.method == 'POST':
+#         new_password = request.form['password']
+#         hashed_pw = generate_password_hash(new_password)
+#         session = Session()
+#         user = session.query(User).filter_by(email=email).first()
+#         if user:
+#             user.password = hashed_pw
+#             session.commit()
+#             session.close()
+#             return "✅ Password reset successful. <a href='/login'>Login</a>."
+#         session.close()
+#         return "❌ User not found."
+#     return render_template('reset_password.html', token=token)
+
+
+
 @app.route('/forgot-password', methods=['GET', 'POST'])
 def forgot_password():
+    message = None
     if request.method == 'POST':
         email = request.form['email']
         session = Session()
@@ -569,21 +498,31 @@ def forgot_password():
             token = serializer.dumps(email, salt='email-reset')
             reset_link = url_for('reset_password', token=token, _external=True)
             send_reset_email(email, reset_link)
-            return "✅ Reset link sent to your email."
-        return "❌ Email not found."
-    return render_template('forgot_password.html')
+            message = "✅ Reset link sent to your email."
+        else:
+            message = "❌ Email not found."
+    return render_template('forgot_password.html', message=message)
+
 
 @app.route('/reset-password/<token>', methods=['GET', 'POST'])
 def reset_password(token):
+    message = None
     try:
+        # Decode token
         email = serializer.loads(token, salt='email-reset', max_age=3600)
     except SignatureExpired:
-        return "❌ The reset link has expired."
+        message = "❌ The reset link has expired."
+        return render_template('reset_password.html', message=message, token=None)
     except BadSignature:
-        return "❌ Invalid or tampered link."
+        message = "❌ Invalid or tampered link."
+        return render_template('reset_password.html', message=message, token=None)
 
     if request.method == 'POST':
-        new_password = request.form['password']
+        new_password = request.form['password'].strip()
+        if not new_password:
+            message = "❌ Password cannot be empty."
+            return render_template('reset_password.html', message=message, token=token)
+
         hashed_pw = generate_password_hash(new_password)
         session = Session()
         user = session.query(User).filter_by(email=email).first()
@@ -591,10 +530,16 @@ def reset_password(token):
             user.password = hashed_pw
             session.commit()
             session.close()
-            return "✅ Password reset successful. <a href='/login'>Login</a>."
-        session.close()
-        return "❌ User not found."
-    return render_template('reset_password.html', token=token)
+            message = "✅ Password reset successful. <a href='/login'>Login</a>."
+        else:
+            message = "❌ User not found."
+            session.close()
+
+    return render_template('reset_password.html', message=message, token=token)
+
+
+
+
 
 def send_reset_email(to_email, link):
     msg = MIMEText(f"Click this link to reset your password:\n{link}")
@@ -636,6 +581,54 @@ def refresh_emails():
     except Exception as e:
         print(f"❌ Error during /refresh-emails: {e}")
         return "Internal Server Error", 500
+
+from flask import render_template, redirect, url_for
+from flask_login import current_user
+from models import User, Session 
+
+@app.route('/user_management')
+@login_required
+def user_management():
+    if not current_user.is_admin:
+        return redirect(url_for('dashboard'))
+
+    session = Session()
+    users = session.query(User).all()
+    session.close()
+    return render_template('user_management.html', users=users)
+
+
+@app.route('/delete_user/<int:user_id>', methods=['POST'])
+@login_required
+def delete_user(user_id):
+    if not current_user.is_admin:
+        return redirect(url_for('dashboard'))
+
+    if user_id == current_user.id:
+        # Prevent deleting self
+        return redirect(url_for('user_management'))
+
+    session = Session()
+    user = session.query(User).get(user_id)
+    if user:
+        session.delete(user)
+        session.commit()
+    session.close()
+    return redirect(url_for('user_management'))
+
+
+
+@login_manager.user_loader
+def load_user(user_id):
+    session = Session()
+    user = session.query(User).get(int(user_id))
+    if user:
+        session.expunge(user)  # Detach object from session
+        print(f"Loaded user {user.email} is_admin={user.is_admin}")
+    else:
+        print(f"No user found for id {user_id}")
+    session.close()
+    return user
 
 
 
@@ -728,12 +721,16 @@ def dashboard():
 
     # ⛔ DO NOT close session yet
     response = render_template(
-        'dashboard.html',
-        emails=emails,
-        query=query,
-        filter_mode=filter_type,
-        active_page=active_page
-    )
+    'dashboard.html',
+    emails=emails,
+    query=query,
+    filter_mode=filter_type,
+    active_page=active_page,
+    current_user=current_user,
+    role=getattr(current_user, 'role', 'user'),       # default 'user' if no role
+    is_admin=getattr(current_user, 'is_admin', False) # default False if missing
+)
+
 
     # ✅ Now safe to close
     session.expunge_all()
@@ -778,6 +775,18 @@ def delete_sent_email(email_id):
         return jsonify({"success": True})
     return jsonify({"success": False, "error": "Email not found"})
 
+# from flask import jsonify
+# from email_model import Session, EmailStatus  
+
+# @app.route('/reminder_count')
+# def reminder_count():
+#     try:
+#         session = Session()
+#         count = session.query(EmailStatus).filter_by(reminder=True, read=False).count()
+#         return jsonify({'count': count})
+#     except Exception as e:
+#         print("🔥 ERROR in /reminder_count:", e)
+#         return jsonify({'count': 0, 'error': str(e)}), 500
 
 
 
@@ -941,6 +950,15 @@ def get_urgency_class(timestamp):
     else:
         return 'normal'          # 🟢 Future reminders
 
+from flask import jsonify
+from grammar import improve_grammar
+
+@app.route("/improve_grammar", methods=["POST"])
+def grammar_route():
+    data = request.get_json()
+    text = data.get("text", "")
+    improved = improve_grammar(text)
+    return jsonify({"improved": improved})
 
 
 # ------------------ Run App ------------------

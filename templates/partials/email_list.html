@@ -1,4 +1,4 @@
-{% for email in emails %}
+<!-- {% for email in emails %}
 <div class="email {{ email.classification | lower }}" data-id="{{ email.id }}">
 
     <p><strong>From:</strong> {{ email.sender }} </p>
@@ -11,7 +11,7 @@
     <div class="email-footer">
 
 
-        <!-- Reminded tag (initially hidden if not reminded) -->
+
 
     </div>
     <small>{{ email.timestamp | format_datetime }}</small>
@@ -49,31 +49,28 @@
         data-subject="{{ email.subject }}">
         <i class="fas fa-trash"></i>
     </button>
-    <!-- <button class="reminder-btn" data-email-id="{{ email.id }}">
-        <i class="fas fa-bell"></i> Set Reminder
-    </button>
-    <span id="reminder-tag-{{ email.id }}" class="reminder-tag"
-        style="{% if not email.reminder %}display: none;{% endif %}">
-        🔔 Reminded
-    </span> -->
-    <!-- Buttons and tags go here -->
-    <button id="reminder-btn-{{ email.id }}" class="reminder-btn" data-email-id="{{ email.id }}">
+
+<button id="reminder-btn-{{ email.id }}"
+        class="reminder-btn"
+        data-email-id="{{ email.id }}"
+        data-reminder="{{ 'true' if email.reminder else 'false' }}">
+
         {% if email.reminder %}
         ❌ Remove Reminder
         {% else %}
         🔔 Set Reminder
         {% endif %}
     </button>
-    <!-- DateTime Picker (only visible when setting reminder) -->
+
 <div id="reminder-input-{{ email.id }}" class="reminder-input" style="display: none; margin-top: 5px;">
     <input type="datetime-local" id="reminder-time-{{ email.id }}" class="reminder-datetime" />
     <button onclick="sendReminderTime({{ email.id }})">✅ Confirm</button>
 
 </div>
-<!-- Optional Tag UI -->
+
 <span id="reminder-tag-{{ email.id }}" class="reminder-tag" data-reminder="{{ email.reminder }}" style="{% if not email.reminder %}display: none;{% endif %}">
    Reminder Set
-  <!-- <div class="urgency-bar" id="urgency-bar-{{ email.id }}"></div> -->
+
 </span>
 
 
@@ -118,3 +115,488 @@
 
 </div>
 {% endfor %}
+ -->
+
+<!-- {% for email in emails %} -->
+{% for email in emails %}
+<div class="email {{ email.classification | lower }}" data-id="{{ email.id }}">
+
+
+  <div class="email-header">
+    <span class="email-sender">{{ email.sender }}</span>
+    <span class="email-time">{{ email.timestamp | format_datetime }}</span>
+  </div>
+
+  <div class="email-main">
+    <p class="email-subject">{{ email.subject }}</p>
+    <p class="email-summary">{{ email.summary }}</p>
+  </div>
+
+
+  <div class="email-actions">
+    <span class="badge priority-{{ email.priority | lower }}">{{ email.priority }}</span>
+
+    {% if email.archived %}
+    <span class="badge archived">📁 Archived</span>
+    {% endif %}
+
+    {% if email.read %}
+    <span class="badge read"> Read</span>
+    {% else %}
+    <span class="badge unread">🔴 Unread</span>
+    <button class="small-btn mark-btn" onclick="markAsRead(this, '{{ email.subject }}')"> <i
+        class="fas fa-check"></i></button>
+    {% endif %}
+
+    <form action="/reply" method="post" class="inline-form">
+      <input type="hidden" name="to" value="{{ email.sender }}">
+      <textarea name="message" rows="2" placeholder="Type your reply..." required></textarea>
+      <button type="submit" class="small-btn reply-btn"><i class="fas fa-reply"></i> Reply</button>
+    </form>
+
+    {% if filter_mode == 'archived' %}
+    <form method="POST" action="{{ url_for('unarchive_email') }}" class="inline-form">
+      <input type="hidden" name="email_id" value="{{ email.id }}">
+      <button type="submit" class="small-btn archive-btn"><i class="fas fa-box"></i> Unarchive</button>
+    </form>
+    {% else %}
+    <form method="POST" action="{{ url_for('archive_email') }}" class="inline-form">
+      <input type="hidden" name="email_id" value="{{ email.id }}">
+      <button type="submit" class="small-btn archive-btn"><i class="fas fa-box"></i> Archive</button>
+    </form>
+    {% endif %}
+
+
+    <button class="small-btn delete-btn" onclick="deleteEmail('{{ email.subject }}')" title="Delete"
+      data-subject="{{ email.subject }}">
+      <i class="fas fa-trash"></i>
+    </button>
+
+
+    <button id="reminder-btn-{{ email.id }}" class="reminder-btn small-btn" data-email-id="{{ email.id }}"
+      data-reminder="{{ 'true' if email.reminder else 'false' }}">
+      {% if email.reminder %}
+      <i class="fas fa-bell-slash"></i>
+      {% else %}
+      <i class="fas fa-bell"></i>
+      {% endif %}
+    </button>
+
+
+    <div id="reminder-input-{{ email.id }}" class="reminder-input">
+      <input type="datetime-local" id="reminder-time-{{ email.id }}" class="reminder-datetime" />
+      <button onclick="sendReminderTime({{ email.id }})" class="small-btn confirm-btn">Confirm</button>
+    </div>
+
+    <!-- <span id="reminder-tag-{{ email.id }}" class="reminder-tag"
+      style="{% if not email.reminder %}display: none;{% endif %}">
+      Reminder Set
+    </span> -->
+  </div>
+
+
+  <div class="email-footer">
+    <button class="toggle-details-btn" onclick="toggleDetails(this)">▼ View Details</button>
+    <span id="reminder-tag-{{ email.id }}" class="reminder-tag"
+      style="{% if not email.reminder %}display: none;{% endif %}">
+      Reminder Set
+    </span>
+  </div>
+
+
+
+  <div class="email-details" style="display: none;" data-id="{{ email.id }}">
+    <p><strong>From:</strong> {{ email.sender }}</p>
+    <p><strong>Subject:</strong> {{ email.subject }}</p>
+    <p><strong>Summary:</strong> {{ email.summary }}</p>
+
+    <p id="email-body" class="email-read-body">
+      {% if email.body %}
+      {{ email.body.replace('\n', '<br>') | safe }}
+      {% else %}
+      <em>No body available.</em>
+      {% endif %}
+    </p>
+
+    <div class="email-actions">
+      <button class="small-btn read-aloud-btn"><i class="fas fa-volume-up"></i> Read Aloud</button>
+      <label class="voice-label">Voice:</label>
+      <select class="voiceSelect">
+        <option value="">Loading voices...</option>
+      </select>
+    </div>
+
+    {% if email.attachments %}
+    <p><strong>Attachments:</strong></p>
+    <ul>
+      {% for filename in email.attachments.split(',') %}
+      <li>
+        <a href="{{ url_for('download_attachment', filename=filename.strip()) }}" target="_blank">📎 {{ filename.strip()
+          }}</a>
+      </li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+  </div>
+</div>
+{% endfor %}
+
+
+
+<!-- {% endfor %} -->
+<style>
+  /* ================== GLOBAL ================== */
+  :root {
+    /* --primary: #2b2f4e; */
+    --primary: #404257;
+    --primary-hover: #474a6b;
+    --danger: #d93025;
+    --danger-bg: #fce8e6;
+    --danger-hover: #fad2cf;
+    --success: #137333;
+    --success-bg: #e6f4ea;
+    --warning: #b06000;
+    --warning-bg: #fff7e0;
+    --warning-hover: #fde293;
+    --gray-light: #f1f3f4;
+    --gray: #5f6368;
+    --text-dark: #222;
+    --text: #333;
+    --text-light: #555;
+    --border: #eee;
+    --background: #fff;
+    --background-alt: #f8f9fa;
+    --button-radius: 6px;
+    --badge-radius: 12px;
+  }
+
+  /* ================== EMAIL CARD ================== */
+  .email {
+    background: var(--background);
+    border-radius: 10px;
+    padding: 16px;
+    margin: 14px 0;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+    transition: box-shadow 0.2s ease, transform 0.1s ease;
+    font-family: "Segoe UI", Roboto, sans-serif;
+  }
+
+  .email:hover {
+    box-shadow: 0 6px 14px rgba(0, 0, 0, 0.12);
+    transform: translateY(-1px);
+  }
+
+  /* ================== HEADER ================== */
+  .email-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+
+  .email-sender {
+    font-weight: 600;
+    color: var(--text-dark);
+    font-size: 1rem;
+  }
+
+  .email-time {
+    font-size: 0.82rem;
+    /* color: var(--gray); */
+    color: var(--muted);
+    
+  }
+
+  /* ================== MAIN CONTENT ================== */
+  .email-main {
+    margin-bottom: 10px;
+  }
+
+  .email-subject {
+    font-weight: 600;
+    font-size: 1.05rem;
+    margin: 0 0 3px;
+    color: var(--text);
+  }
+
+  .email-summary {
+    font-size: 0.9rem;
+    color: var(--text-light);
+    margin: 0;
+    line-height: 1.4;
+  }
+
+  /* ================== ACTIONS ================== */
+  .email-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border);
+    align-items: center;
+  }
+
+  /* Generic Button */
+  .small-btn,
+  .reminder-btn,
+  .toggle-details-btn,
+  .read-aloud-btn {
+    border: none;
+    outline: none;
+    padding: 6px 12px;
+    border-radius: var(--button-radius);
+    font-size: 0.85rem;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  /* Button hover effect */
+  .small-btn:hover,
+  .reminder-btn:hover,
+  .toggle-details-btn:hover,
+  .read-aloud-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+  }
+
+  /* ================== BUTTON COLORS ================== */
+  .reply-btn {
+    background: var(--primary);
+    color: #fff;
+    /* background: #e8eaf6;
+    color: var(--primary); */
+  }
+
+  .reply-btn:hover {
+    background: var(--primary-hover);
+    /* background: #d0d3f1; */
+  }
+
+  .archive-btn {
+    background: #e8eaf6;
+    color: var(--primary);
+  }
+
+  .archive-btn:hover {
+    background: #d0d3f1;
+  }
+
+  .delete-btn {
+    background: var(--danger-bg);
+    color: var(--danger);
+  }
+
+  .delete-btn:hover {
+    background: var(--danger-hover);
+  }
+
+  .reminder-btn {
+    background: var(--warning-bg);
+    color: var(--warning);
+  }
+
+  .reminder-btn:hover {
+    background: var(--warning-hover);
+  }
+
+  .confirm-btn {
+    background: var(--success-bg);
+    color: var(--success);
+  }
+
+  .confirm-btn:hover {
+    background: #d7f0da;
+  }
+
+  .toggle-details-btn {
+    background: var(--primary);
+    color: #fff;
+    /* background: #e8eaf6;
+    color: var(--primary); */
+  }
+
+  .toggle-details-btn:hover {
+    background: var(--primary-hover);
+    /* background: #d0d3f1; */
+  }
+
+  .read-aloud-btn {
+    background: var(--primary);
+    color: #fff;
+    /* background: #e8eaf6;
+    color: var(--primary); */
+  }
+
+  .read-aloud-btn:hover {
+    background: var(--primary-hover);
+    /* background: #d0d3f1; */
+  }
+
+  /* .mark-btn{
+    background: #e8eaf6;
+    color: var(--primary);
+  }
+  .mark-btn:hover{
+    background: #d0d3f1;
+  } */
+  .mark-btn {
+    background: #e0f7e9;
+    /* light green for “success/read” */
+    color: #2e7d32;
+    /* dark green text for contrast */
+    border: 1px solid #a5d6a7;
+    transition: 0.2s;
+
+  }
+
+  .mark-btn:hover {
+    background: #c8e6c9;
+    /* slightly darker green on hover */
+  }
+
+
+  /* ================== INLINE REPLY BOX ================== */
+  .inline-form {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    flex: 1;
+    min-width: 100px;
+    margin-top: 4px;
+  }
+
+  .inline-form textarea {
+    flex: 1;
+    min-height: 36px;
+    font-size: 0.85rem;
+    padding: 0px 10px;
+    border: 1px solid #ddd;
+    border-radius: var(--button-radius);
+    resize: vertical;
+    transition: border 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .inline-form textarea:focus {
+    border: 1px solid var(--primary);
+    box-shadow: 0 0 0 3px rgba(42, 46, 78, 0.2);
+    outline: none;
+  }
+
+  .inline-form button {
+    align-self: center;
+  }
+
+  /* ================== BADGES ================== */
+  .badge {
+    padding: 4px 10px;
+    border-radius: var(--badge-radius);
+    font-size: 0.75rem;
+    font-weight: 600;
+    display: inline-block;
+    text-transform: capitalize;
+  }
+
+  .priority-high {
+    background: #fdecea;
+    color: var(--danger);
+  }
+
+  .read {
+    background: var(--success-bg);
+    color: var(--success);
+  }
+
+  .unread {
+    background: #fff3cd;
+    color: #856404;
+  }
+
+  .archived {
+    background: #e8eaed;
+    color: var(--gray);
+  }
+
+  .reminder-tag {
+    background: var(--warning-bg);
+    color: var(--warning);
+  }
+
+  /* ================== PRIORITY BADGES ================== */
+  .priority-high {
+    background: #fdecea;
+    /* light red/pink */
+    color: var(--danger);
+  }
+
+  .priority-medium {
+    background: #fff7e0;
+    /* light yellow */
+    color: #b06000;
+  }
+
+  .priority-low {
+    background: #e6f4ea;
+    /* light green */
+    color: #137333;
+  }
+
+
+  /* ================== REMINDER INPUT ================== */
+  .reminder-input {
+    display: none;
+    margin-top: 4px;
+    width: 100%;
+    text-align: right;
+    /* pushes input and button to the right */
+  }
+
+  .reminder-input input {
+    font-size: 0.82rem;
+    padding: 4px 6px;
+    border-radius: var(--button-radius);
+    border: 1px solid #ccc;
+  }
+
+
+  /* ================== FOOTER ================== */
+  .email-footer {
+    margin-top: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  /* ================== DETAILS EXPANDED ================== */
+  .email-details {
+    margin-top: 12px;
+    padding: 12px;
+    background: var(--background-alt);
+    border-radius: 8px;
+    border: 1px solid var(--border);
+  }
+
+  .email-read-body {
+    font-size: 0.9rem;
+    color: var(--text);
+    margin-bottom: 12px;
+    line-height: 1.5;
+  }
+
+  /* Align Read Aloud + Voice Select inline */
+  .email-details .email-actions {
+    margin-top: 10px;
+    justify-content: flex-start;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .voice-label {
+    font-size: 0.82rem;
+    margin-right: 4px;
+  }
+</style>
